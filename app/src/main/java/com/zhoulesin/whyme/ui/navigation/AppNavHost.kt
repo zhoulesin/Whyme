@@ -16,6 +16,7 @@ import com.zhoulesin.whyme.ui.learning.WordDetailScreen
 import com.zhoulesin.whyme.ui.learning.QuizScreen
 import com.zhoulesin.whyme.ui.profile.ProfileScreen
 import com.zhoulesin.whyme.ui.favorites.FavoritesScreen
+import com.zhoulesin.whyme.ui.statistics.StatisticsScreen
 
 /**
  * 应用导航主机
@@ -114,6 +115,12 @@ fun AppNavHost(
                 onNavigateToWordDetail = { wordId ->
                     navController.navigate(Screen.WordDetail.createRoute(wordId))
                 }
+            )
+        }
+
+        composable(Screen.Statistics.route) {
+            StatisticsScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

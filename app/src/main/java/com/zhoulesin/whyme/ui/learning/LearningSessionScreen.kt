@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -108,10 +109,18 @@ fun LearningSessionScreen(
         )
     }
 
+    // 根据模式获取标题
+    val title = when (mode.uppercase()) {
+        "LEARN" -> "学习新词"
+        "REVIEW" -> "复习旧词"
+        "QUIZ" -> "单词测试"
+        else -> "学习中"
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("学习中心") },
+                title = { Text(title) },
                 navigationIcon = {
                     IconButton(onClick = { showExitDialog = true }) {
                         Icon(
@@ -131,8 +140,20 @@ fun LearningSessionScreen(
         ) {
             when (val state = uiState.learningState) {
                 is LearningState.Idle -> {
-                    // 空闲状态 - 不应该发生
-                    Text("正在加载...")
+                    // 空闲状态 - 等待数据加载
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "正在加载单词...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
 
                 is LearningState.Learning -> {
