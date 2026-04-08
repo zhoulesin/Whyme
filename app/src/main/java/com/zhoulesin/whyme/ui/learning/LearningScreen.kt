@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,9 +23,36 @@ import com.zhoulesin.whyme.ui.components.WordCard
 fun LearningScreen(
     onNavigateToWordDetail: (Long) -> Unit,
     onNavigateToQuiz: () -> Unit,
+    onNavigateBack: () -> Unit,
     viewModel: LearningViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var showExitDialog by remember { mutableStateOf(false) }
+
+    // 退出确认对话框
+    if (showExitDialog) {
+        AlertDialog(
+            onDismissRequest = { showExitDialog = false },
+            title = { Text("确认退出？") },
+            text = { Text("退出后当前学习进度将不会保存") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.resetLearning()
+                        showExitDialog = false
+                        onNavigateBack()
+                    }
+                ) {
+                    Text("确认退出")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showExitDialog = false }) {
+                    Text("继续学习")
+                }
+            }
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -31,12 +60,30 @@ fun LearningScreen(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        Text(
-            text = "学习中心",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
+        // 顶部栏
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "学习中心",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            // 非空闲状态显示退出按钮
+            if (uiState.learningState !is LearningState.Idle) {
+                IconButton(onClick = { showExitDialog = true }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "退出学习"
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         when (val state = uiState.learningState) {
             is LearningState.Idle -> {
@@ -68,7 +115,8 @@ fun LearningScreen(
                     learned = state.learned,
                     reviewed = state.reviewed,
                     accuracy = state.accuracy,
-                    onContinue = { viewModel.resetLearning() }
+                    onContinue = { viewModel.resetLearning() },
+                    onGoHome = onNavigateBack
                 )
             }
 
@@ -268,7 +316,8 @@ private fun LearningCompletedContent(
     learned: Int,
     reviewed: Int,
     accuracy: Float,
-    onContinue: () -> Unit
+    onContinue: () -> Unit,
+    onGoHome: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -340,6 +389,16 @@ private fun LearningCompletedContent(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text("继续学习")
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedButton(
+                onClick = onGoHome,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("返回首页")
             }
         }
     }

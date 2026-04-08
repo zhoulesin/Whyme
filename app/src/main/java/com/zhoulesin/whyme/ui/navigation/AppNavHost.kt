@@ -44,6 +44,9 @@ fun AppNavHost(
                 },
                 onNavigateToQuiz = {
                     navController.navigate(Screen.Quiz.route)
+                },
+                onNavigateBack = {
+                    navController.popBackStack()
                 }
             )
         }
