@@ -4,6 +4,7 @@ import com.zhoulesin.whyme.data.local.dao.WordDao
 import com.zhoulesin.whyme.data.local.entity.toDomain
 import com.zhoulesin.whyme.data.local.entity.toDomainList
 import com.zhoulesin.whyme.data.local.entity.toEntity
+import com.zhoulesin.whyme.domain.model.ReviewResult
 import com.zhoulesin.whyme.domain.model.Word
 import com.zhoulesin.whyme.domain.repository.WordRepository
 import kotlinx.coroutines.flow.Flow
@@ -23,14 +24,22 @@ class WordRepositoryImpl @Inject constructor(
     override fun getAllWords(): Flow<List<Word>> =
         wordDao.getAllWords().map { it.toDomainList() }
 
-    override fun getWordsForReview(): Flow<List<Word>> =
-        wordDao.getWordsForReview(LocalDate.now().toEpochDay()).map { it.toDomainList() }
+    override fun getWordsForReview(limit: Int): Flow<List<Word>> =
+        wordDao.getWordsForReview(LocalDate.now().toEpochDay(), limit).map { it.toDomainList() }
 
     override fun getTodayNewWords(limit: Int): Flow<List<Word>> =
         wordDao.getNewWords(limit).map { it.toDomainList() }
 
+    override fun getTodayLearnedWords(): Flow<List<Word>> {
+        val todayStart = LocalDate.now().atStartOfDay().toEpochSecond(java.time.ZoneOffset.systemDefault().rules.getOffset(java.time.Instant.now())) * 1000
+        return wordDao.getTodayLearnedWords(todayStart).map { it.toDomainList() }
+    }
+
     override fun getFavoriteWords(): Flow<List<Word>> =
         wordDao.getFavoriteWords().map { it.toDomainList() }
+
+    override fun getNewWordsBook(): Flow<List<Word>> =
+        wordDao.getNewWordsBook().map { it.toDomainList() }
 
     override suspend fun getWordById(id: Long): Word? =
         wordDao.getWordById(id)?.toDomain()
@@ -47,8 +56,25 @@ class WordRepositoryImpl @Inject constructor(
     override suspend fun deleteWord(word: Word) =
         wordDao.deleteWord(word.toEntity())
 
-    override suspend fun updateMasteryLevel(wordId: Long, level: Int, nextReviewDate: LocalDate) =
-        wordDao.updateMasteryLevel(wordId, level, nextReviewDate.toEpochDay(), System.currentTimeMillis())
+    override suspend fun updateWordReview(
+        wordId: Long,
+        masteryLevel: Int,
+        nextReviewDate: LocalDate,
+        isLearned: Boolean,
+        reviewResult: ReviewResult?
+    ) {
+        val timestamp = System.currentTimeMillis()
+        val isCorrect = reviewResult == ReviewResult.GOOD || reviewResult == ReviewResult.EASY
+        wordDao.updateWordReview(
+            wordId = wordId,
+            level = masteryLevel,
+            nextReviewDate = nextReviewDate.toEpochDay(),
+            isLearned = isLearned,
+            lastReviewedAt = timestamp,
+            reviewResult = reviewResult?.name,
+            correctIncrement = if (isCorrect) 1 else 0
+        )
+    }
 
     override suspend fun toggleFavorite(wordId: Long) =
         wordDao.toggleFavorite(wordId)
@@ -59,6 +85,28 @@ class WordRepositoryImpl @Inject constructor(
     override suspend fun getMasteredWordCount(): Int =
         wordDao.getMasteredWordCount()
 
+    override suspend fun getLearningWordCount(): Int =
+        wordDao.getLearningWordCount()
+
+    override suspend fun getUnknownWordCount(): Int =
+        wordDao.getUnknownWordCount()
+
+    override suspend fun getTodayNewWordsCount(): Int {
+        val todayStart = LocalDate.now().atStartOfDay().toEpochSecond(java.time.ZoneOffset.systemDefault().rules.getOffset(java.time.Instant.now())) * 1000
+        return wordDao.getTodayNewWordsCount(todayStart)
+    }
+
+    override suspend fun getTodayReviewCount(): Int {
+        val todayStart = LocalDate.now().atStartOfDay().toEpochSecond(java.time.ZoneOffset.systemDefault().rules.getOffset(java.time.Instant.now())) * 1000
+        return wordDao.getTodayReviewCount(todayStart)
+    }
+
     override fun searchWords(query: String): Flow<List<Word>> =
         wordDao.searchWords(query).map { it.toDomainList() }
+
+    override fun getWordsByBank(wordBank: String): Flow<List<Word>> =
+        wordDao.getWordsByBank(wordBank).map { it.toDomainList() }
+
+    override fun getWordsNeedingReview(): Flow<List<Word>> =
+        wordDao.getWordsNeedingReview().map { it.toDomainList() }
 }

@@ -2,7 +2,7 @@ package com.zhoulesin.whyme.domain.usecase
 
 import com.zhoulesin.whyme.domain.model.Word
 import com.zhoulesin.whyme.domain.model.ReviewResult
-import com.zhoulesin.whyme.domain.model.ReviewIntervals
+import com.zhoulesin.whyme.domain.model.DailyLimits
 import com.zhoulesin.whyme.domain.repository.WordRepository
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
@@ -14,13 +14,23 @@ import javax.inject.Inject
 class GetWordsForLearningUseCase @Inject constructor(
     private val wordRepository: WordRepository
 ) {
-    operator fun invoke(): Flow<List<Word>> = wordRepository.getTodayNewWords(10)
+    /**
+     * 获取今日待学习的新词
+     * @param limit 每日新词上限
+     */
+    operator fun invoke(limit: Int = DailyLimits.DEFAULT_NEW_WORDS_LIMIT): Flow<List<Word>> =
+        wordRepository.getTodayNewWords(limit)
 }
 
 class GetWordsForReviewUseCase @Inject constructor(
     private val wordRepository: WordRepository
 ) {
-    operator fun invoke(): Flow<List<Word>> = wordRepository.getWordsForReview()
+    /**
+     * 获取今日需要复习的单词
+     * @param limit 每日复习上限
+     */
+    operator fun invoke(limit: Int = DailyLimits.DEFAULT_REVIEW_LIMIT): Flow<List<Word>> =
+        wordRepository.getWordsForReview(limit)
 }
 
 class GetFavoriteWordsUseCase @Inject constructor(
@@ -30,26 +40,37 @@ class GetFavoriteWordsUseCase @Inject constructor(
 }
 
 class UpdateWordReviewUseCase @Inject constructor(
-    private val wordRepository: WordRepository
+    private val wordRepository: WordRepository,
+    private val calculator: ReviewIntervalCalculator
 ) {
+    /**
+     * 更新单词复习信息
+     * 根据复习结果计算新的掌握等级和下次复习日期
+     */
     suspend operator fun invoke(wordId: Long, result: ReviewResult) {
         val word = wordRepository.getWordById(wordId) ?: return
-        val newLevel = when (result) {
-            ReviewResult.AGAIN -> 0
-            ReviewResult.HARD -> (word.masteryLevel - 1).coerceAtLeast(0)
-            ReviewResult.GOOD -> word.masteryLevel + 1
-            ReviewResult.EASY -> (word.masteryLevel + 2).coerceAtMost(5)
-        }
-        val intervalDays = when (newLevel) {
-            0 -> ReviewIntervals.LEVEL_0
-            1 -> ReviewIntervals.LEVEL_1
-            2 -> ReviewIntervals.LEVEL_2
-            3 -> ReviewIntervals.LEVEL_3
-            4 -> ReviewIntervals.LEVEL_4
-            else -> ReviewIntervals.LEVEL_5
-        }
-        val nextReviewDate = LocalDate.now().plusDays(intervalDays.toLong())
-        wordRepository.updateMasteryLevel(wordId, newLevel, nextReviewDate)
+
+        // 计算新的掌握等级
+        val newLevel = calculator.calculateNewLevel(word.masteryLevel, result)
+
+        // 计算下次复习日期
+        val nextReviewDate = calculator.calculateNextReviewDate(
+            currentLevel = word.masteryLevel,
+            result = result,
+            reviewCount = word.reviewCount
+        )
+
+        // 判断是否标记为已学习
+        val isLearned = calculator.shouldMarkAsLearned(word.masteryLevel, result)
+
+        // 更新单词信息
+        wordRepository.updateWordReview(
+            wordId = wordId,
+            masteryLevel = newLevel,
+            nextReviewDate = nextReviewDate,
+            isLearned = isLearned,
+            reviewResult = result
+        )
     }
 }
 

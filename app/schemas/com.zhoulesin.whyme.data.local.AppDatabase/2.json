@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "a27f77a92d0dcf4d25d4a28392e92441",
+    "identityHash": "db2d27635cf6ca6db5700d943a69fe12",
     "entities": [
       {
         "tableName": "words",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `word` TEXT NOT NULL, `phonetic` TEXT NOT NULL, `definition` TEXT NOT NULL, `example` TEXT NOT NULL, `translation` TEXT NOT NULL, `masteryLevel` INTEGER NOT NULL, `isFavorite` INTEGER NOT NULL, `nextReviewDate` INTEGER, `reviewCount` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `lastReviewedAt` INTEGER)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `word` TEXT NOT NULL, `phonetic` TEXT NOT NULL, `definition` TEXT NOT NULL, `example` TEXT NOT NULL, `translation` TEXT NOT NULL, `usPhonetic` TEXT, `ukPhonetic` TEXT, `masteryLevel` INTEGER NOT NULL, `isLearned` INTEGER NOT NULL, `isNew` INTEGER NOT NULL, `isFavorite` INTEGER NOT NULL, `nextReviewDate` INTEGER, `reviewCount` INTEGER NOT NULL, `correctCount` INTEGER NOT NULL, `lastReviewResult` TEXT, `createdAt` INTEGER NOT NULL, `learnedAt` INTEGER, `lastReviewedAt` INTEGER, `wordBank` TEXT)",
         "fields": [
           {
             "fieldPath": "id",
@@ -45,8 +45,32 @@
             "notNull": true
           },
           {
+            "fieldPath": "usPhonetic",
+            "columnName": "usPhonetic",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "ukPhonetic",
+            "columnName": "ukPhonetic",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
             "fieldPath": "masteryLevel",
             "columnName": "masteryLevel",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isLearned",
+            "columnName": "isLearned",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isNew",
+            "columnName": "isNew",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -69,15 +93,39 @@
             "notNull": true
           },
           {
+            "fieldPath": "correctCount",
+            "columnName": "correctCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastReviewResult",
+            "columnName": "lastReviewResult",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
             "fieldPath": "createdAt",
             "columnName": "createdAt",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
+            "fieldPath": "learnedAt",
+            "columnName": "learnedAt",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
             "fieldPath": "lastReviewedAt",
             "columnName": "lastReviewedAt",
             "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "wordBank",
+            "columnName": "wordBank",
+            "affinity": "TEXT",
             "notNull": false
           }
         ],
@@ -144,7 +192,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a27f77a92d0dcf4d25d4a28392e92441')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'db2d27635cf6ca6db5700d943a69fe12')"
     ]
   }
 }

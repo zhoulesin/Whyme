@@ -1,5 +1,6 @@
 package com.zhoulesin.whyme.domain.repository
 
+import com.zhoulesin.whyme.domain.model.ReviewResult
 import com.zhoulesin.whyme.domain.model.Word
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
@@ -15,8 +16,9 @@ interface WordRepository {
 
     /**
      * 获取需要复习的单词
+     * @param limit 每日复习上限
      */
-    fun getWordsForReview(): Flow<List<Word>>
+    fun getWordsForReview(limit: Int = 50): Flow<List<Word>>
 
     /**
      * 获取今日新学单词
@@ -24,9 +26,19 @@ interface WordRepository {
     fun getTodayNewWords(limit: Int): Flow<List<Word>>
 
     /**
+     * 获取今日已学习的单词
+     */
+    fun getTodayLearnedWords(): Flow<List<Word>>
+
+    /**
      * 获取收藏的单词
      */
     fun getFavoriteWords(): Flow<List<Word>>
+
+    /**
+     * 获取生词本（收藏的未掌握单词）
+     */
+    fun getNewWordsBook(): Flow<List<Word>>
 
     /**
      * 根据ID获取单词
@@ -54,9 +66,20 @@ interface WordRepository {
     suspend fun deleteWord(word: Word)
 
     /**
-     * 更新单词掌握程度
+     * 更新单词复习信息
+     * @param wordId 单词ID
+     * @param masteryLevel 新的掌握等级
+     * @param nextReviewDate 下次复习日期
+     * @param isLearned 是否标记为已学习
+     * @param reviewResult 复习结果
      */
-    suspend fun updateMasteryLevel(wordId: Long, level: Int, nextReviewDate: LocalDate)
+    suspend fun updateWordReview(
+        wordId: Long,
+        masteryLevel: Int,
+        nextReviewDate: LocalDate,
+        isLearned: Boolean = false,
+        reviewResult: ReviewResult? = null
+    )
 
     /**
      * 切换收藏状态
@@ -69,12 +92,42 @@ interface WordRepository {
     suspend fun getWordCount(): Int
 
     /**
-     * 获取已掌握的单词数
+     * 获取已掌握的单词数 (masteryLevel >= 4)
      */
     suspend fun getMasteredWordCount(): Int
+
+    /**
+     * 获取学习中单词数 (0 < masteryLevel < 4)
+     */
+    suspend fun getLearningWordCount(): Int
+
+    /**
+     * 获取陌生单词数 (masteryLevel = 0)
+     */
+    suspend fun getUnknownWordCount(): Int
+
+    /**
+     * 获取今日新词学习数量
+     */
+    suspend fun getTodayNewWordsCount(): Int
+
+    /**
+     * 获取今日复习数量
+     */
+    suspend fun getTodayReviewCount(): Int
 
     /**
      * 搜索单词
      */
     fun searchWords(query: String): Flow<List<Word>>
+
+    /**
+     * 获取指定词库的单词
+     */
+    fun getWordsByBank(wordBank: String): Flow<List<Word>>
+
+    /**
+     * 获取已学习但未掌握的单词（需要继续复习）
+     */
+    fun getWordsNeedingReview(): Flow<List<Word>>
 }

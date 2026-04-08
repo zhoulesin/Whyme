@@ -15,10 +15,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.zhoulesin.whyme.domain.model.LearningState
-import com.zhoulesin.whyme.domain.model.QuestionType
-import com.zhoulesin.whyme.domain.model.ReviewResult
-import com.zhoulesin.whyme.ui.components.MasteryButtons
+import com.zhoulesin.whyme.domain.model.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,15 +25,16 @@ fun QuizScreen(
     viewModel: LearningViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var selectedAnswer by remember { mutableStateOf<String?>(null) }
-    var isAnswerCorrect by remember { mutableStateOf<Boolean?>(null) }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("单词测试") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = {
+                        viewModel.resetLearning()
+                        onNavigateBack()
+                    }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "返回"
@@ -57,38 +55,29 @@ fun QuizScreen(
                 is LearningState.Idle -> {
                     // 开始测试
                     QuizStartContent(
-                        wordCount = uiState.wordsToLearn.size + uiState.wordsForReview.size,
-                        onStart = { viewModel.startLearning() }
+                        wordCount = uiState.wordsToLearn.size + uiState.allLearnedWords.size,
+                        onStartQuiz = { viewModel.startQuiz() }
                     )
                 }
 
-                is LearningState.Learning -> {
+                is LearningState.Testing -> {
                     // 测试进行中
-                    QuizContent(
-                        word = state.currentWord,
-                        questionNumber = state.index + 1,
-                        totalQuestions = state.total,
-                        selectedAnswer = selectedAnswer,
-                        isAnswerCorrect = isAnswerCorrect,
-                        onSelectAnswer = { answer ->
-                            selectedAnswer = answer
-                            isAnswerCorrect = answer == state.currentWord.translation
-                        },
-                        onNext = {
-                            selectedAnswer = null
-                            isAnswerCorrect = null
-                            val result = if (isAnswerCorrect == true) ReviewResult.GOOD else ReviewResult.AGAIN
-                            viewModel.markWord(result)
-                        }
+                    QuizQuestionContent(
+                        state = state,
+                        selectedAnswer = uiState.selectedAnswer,
+                        isAnswerRevealed = uiState.isAnswerRevealed,
+                        onSelectAnswer = { viewModel.selectAnswer(it) },
+                        onNext = { viewModel.nextQuestion() }
                     )
                 }
 
-                is LearningState.Completed -> {
+                is LearningState.QuizResult -> {
                     // 测试完成
-                    QuizCompletedContent(
-                        correctCount = state.learned + state.reviewed,
-                        totalCount = state.learned + state.reviewed,
+                    QuizResultContent(
+                        correctCount = state.correctCount,
+                        totalCount = state.totalCount,
                         accuracy = state.accuracy,
+                        onRetry = { viewModel.startQuiz() },
                         onFinish = {
                             viewModel.resetLearning()
                             onQuizComplete()
@@ -96,7 +85,13 @@ fun QuizScreen(
                     )
                 }
 
-                else -> {}
+                else -> {
+                    // 其他状态，显示开始测试
+                    QuizStartContent(
+                        wordCount = uiState.wordsToLearn.size + uiState.allLearnedWords.size,
+                        onStartQuiz = { viewModel.startQuiz() }
+                    )
+                }
             }
         }
     }
@@ -105,7 +100,7 @@ fun QuizScreen(
 @Composable
 private fun QuizStartContent(
     wordCount: Int,
-    onStart: () -> Unit
+    onStartQuiz: () -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -128,15 +123,42 @@ private fun QuizStartContent(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "共 $wordCount 个单词",
+            text = "共 $wordCount 个可测试单词",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 测试说明
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "测试规则",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "• 看单词，选中文释义\n• 共 10 道选择题\n• 正确率影响后续复习安排",
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Start
+                )
+            }
+        }
+
         Spacer(modifier = Modifier.height(48.dp))
 
         Button(
-            onClick = onStart,
+            onClick = onStartQuiz,
             enabled = wordCount > 0,
             modifier = Modifier
                 .fillMaxWidth()
@@ -149,38 +171,51 @@ private fun QuizStartContent(
                 fontWeight = FontWeight.Bold
             )
         }
+
+        if (wordCount == 0) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "请先学习一些单词再来测试吧",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error
+            )
+        }
     }
 }
 
 @Composable
-private fun QuizContent(
-    word: com.zhoulesin.whyme.domain.model.Word,
-    questionNumber: Int,
-    totalQuestions: Int,
+private fun QuizQuestionContent(
+    state: LearningState.Testing,
     selectedAnswer: String?,
-    isAnswerCorrect: Boolean?,
+    isAnswerRevealed: Boolean,
     onSelectAnswer: (String) -> Unit,
     onNext: () -> Unit
 ) {
+    val correctAnswer = when (state.questionType) {
+        QuestionType.WORD_TO_CHINESE -> state.currentWord.translation
+        QuestionType.CHINESE_TO_WORD -> state.currentWord.word
+        QuestionType.SPELLING -> state.currentWord.word
+    }
+
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // 进度
         LinearProgressIndicator(
-            progress = { questionNumber.toFloat() / totalQuestions },
+            progress = { (state.index + 1).toFloat() / state.total },
             modifier = Modifier.fillMaxWidth(),
         )
 
         Text(
-            text = "$questionNumber / $totalQuestions",
+            text = "${state.index + 1} / ${state.total}",
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(vertical = 8.dp)
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        // 问题
+        // 问题卡片
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
@@ -195,7 +230,11 @@ private fun QuizContent(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "这个单词是什么意思？",
+                    text = when (state.questionType) {
+                        QuestionType.WORD_TO_CHINESE -> "这个单词是什么意思？"
+                        QuestionType.CHINESE_TO_WORD -> "这个中文对应的单词是？"
+                        QuestionType.SPELLING -> "请拼写这个单词"
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                 )
@@ -203,65 +242,72 @@ private fun QuizContent(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = word.word,
+                    text = when (state.questionType) {
+                        QuestionType.WORD_TO_CHINESE -> state.currentWord.word
+                        QuestionType.CHINESE_TO_WORD -> state.currentWord.translation
+                        QuestionType.SPELLING -> state.currentWord.translation
+                    },
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Bold
                 )
 
-                Text(
-                    text = word.phonetic,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                )
+                if (state.questionType == QuestionType.WORD_TO_CHINESE) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = state.currentWord.phonetic,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    )
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         // 答案选项
-        val options = remember { generateOptions(word.translation) }
+        if (state.questionType != QuestionType.SPELLING) {
+            state.options.forEach { option ->
+                val isSelected = selectedAnswer == option.text
+                val backgroundColor = when {
+                    isAnswerRevealed && option.isCorrect -> MaterialTheme.colorScheme.primaryContainer
+                    isAnswerRevealed && isSelected && !option.isCorrect -> MaterialTheme.colorScheme.errorContainer
+                    isSelected -> MaterialTheme.colorScheme.secondaryContainer
+                    else -> MaterialTheme.colorScheme.surface
+                }
 
-        options.forEach { option ->
-            val isSelected = selectedAnswer == option
-            val backgroundColor = when {
-                isAnswerCorrect != null && option == word.translation -> MaterialTheme.colorScheme.primaryContainer
-                isAnswerCorrect == true && isSelected -> MaterialTheme.colorScheme.primaryContainer
-                isAnswerCorrect == false && isSelected -> MaterialTheme.colorScheme.errorContainer
-                else -> MaterialTheme.colorScheme.surface
-            }
-
-            OutlinedCard(
-                onClick = { if (isAnswerCorrect == null) onSelectAnswer(option) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                colors = CardDefaults.outlinedCardColors(containerColor = backgroundColor)
-            ) {
-                Row(
+                OutlinedCard(
+                    onClick = { if (!isAnswerRevealed) onSelectAnswer(option.text) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(vertical = 4.dp),
+                    colors = CardDefaults.outlinedCardColors(containerColor = backgroundColor)
                 ) {
-                    Text(
-                        text = option,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = option.text,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
 
-                    if (isAnswerCorrect != null) {
-                        if (option == word.translation) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = "正确",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        } else if (isSelected) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "错误",
-                                tint = MaterialTheme.colorScheme.error
-                            )
+                        if (isAnswerRevealed) {
+                            if (option.isCorrect) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "正确",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            } else if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "错误",
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
                         }
                     }
                 }
@@ -271,7 +317,7 @@ private fun QuizContent(
         Spacer(modifier = Modifier.weight(1f))
 
         // 下一题按钮
-        if (isAnswerCorrect != null) {
+        if (isAnswerRevealed) {
             Button(
                 onClick = onNext,
                 modifier = Modifier
@@ -279,17 +325,18 @@ private fun QuizContent(
                     .height(48.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("下一题")
+                Text(if (state.index + 1 >= state.total) "查看结果" else "下一题")
             }
         }
     }
 }
 
 @Composable
-private fun QuizCompletedContent(
+private fun QuizResultContent(
     correctCount: Int,
     totalCount: Int,
     accuracy: Float,
+    onRetry: () -> Unit,
     onFinish: () -> Unit
 ) {
     Column(
@@ -298,14 +345,26 @@ private fun QuizCompletedContent(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = if (accuracy >= 0.8f) "🎉" else if (accuracy >= 0.5f) "👍" else "💪",
+            text = when {
+                accuracy >= 0.9f -> "🌟"
+                accuracy >= 0.8f -> "🎉"
+                accuracy >= 0.6f -> "👍"
+                accuracy >= 0.4f -> "💪"
+                else -> "📚"
+            },
             style = MaterialTheme.typography.displayLarge
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "测试完成！",
+            text = when {
+                accuracy >= 0.9f -> "太厉害了！完美！"
+                accuracy >= 0.8f -> "表现优秀！"
+                accuracy >= 0.6f -> "不错的成绩！"
+                accuracy >= 0.4f -> "继续加油！"
+                else -> "还需要多练习哦"
+            },
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold
         )
@@ -313,58 +372,65 @@ private fun QuizCompletedContent(
         Spacer(modifier = Modifier.height(32.dp))
 
         Row(
-            horizontalArrangement = Arrangement.spacedBy(32.dp)
+            horizontalArrangement = Arrangement.spacedBy(48.dp)
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "$correctCount / $totalCount",
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold
+                    text = "$correctCount",
+                    style = MaterialTheme.typography.displaySmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
                 )
-                Text("正确数", style = MaterialTheme.typography.bodySmall)
+                Text("正确", style = MaterialTheme.typography.bodyMedium)
+            }
+
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "${totalCount - correctCount}",
+                    style = MaterialTheme.typography.displaySmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.error
+                )
+                Text("错误", style = MaterialTheme.typography.bodyMedium)
             }
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = "${(accuracy * 100).toInt()}%",
-                    style = MaterialTheme.typography.headlineLarge,
+                    style = MaterialTheme.typography.displaySmall,
                     fontWeight = FontWeight.Bold,
                     color = when {
                         accuracy >= 0.8f -> MaterialTheme.colorScheme.primary
-                        accuracy >= 0.5f -> MaterialTheme.colorScheme.secondary
+                        accuracy >= 0.6f -> MaterialTheme.colorScheme.secondary
                         else -> MaterialTheme.colorScheme.error
                     }
                 )
-                Text("正确率", style = MaterialTheme.typography.bodySmall)
+                Text("正确率", style = MaterialTheme.typography.bodyMedium)
             }
         }
 
         Spacer(modifier = Modifier.height(48.dp))
 
         Button(
+            onClick = onRetry,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Text("再测一次")
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        OutlinedButton(
             onClick = onFinish,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(16.dp)
+                .height(48.dp),
+            shape = RoundedCornerShape(12.dp)
         ) {
-            Text("完成", style = MaterialTheme.typography.titleMedium)
+            Text("返回")
         }
     }
-}
-
-// 生成选项（简单实现）
-private fun generateOptions(correctAnswer: String): List<String> {
-    val options = mutableListOf(correctAnswer)
-    val fakeAnswers = listOf(
-        "好的", "学习", "工作", "生活", "时间", "世界", "朋友", "家庭",
-        "快乐", "成功", "努力", "坚持", "梦想", "未来", "希望", "勇气"
-    )
-    while (options.size < 4) {
-        val fake = fakeAnswers.filter { it != correctAnswer }.randomOrNull() ?: continue
-        if (!options.contains(fake)) {
-            options.add(fake)
-        }
-    }
-    return options.shuffled()
 }

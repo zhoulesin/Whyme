@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.zhoulesin.whyme.domain.model.AchievementIcon
 import com.zhoulesin.whyme.ui.theme.SkyBlue
 
 @Composable
@@ -263,13 +264,15 @@ private fun AchievementBadge(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = when (achievement.iconName) {
-                    "Star" -> Icons.Default.Star
-                    "EmojiEvents" -> Icons.Default.EmojiEvents
-                    "MilitaryTech" -> Icons.Default.MilitaryTech
-                    "LocalFireDepartment" -> Icons.Default.LocalFireDepartment
-                    "WorkspacePremium" -> Icons.Default.WorkspacePremium
-                    else -> Icons.Default.Star
+                imageVector = when (achievement.icon) {
+                    AchievementIcon.STAR -> Icons.Default.Star
+                    AchievementIcon.TROPHY -> Icons.Default.EmojiEvents
+                    AchievementIcon.MEDAL -> Icons.Default.MilitaryTech
+                    AchievementIcon.FIRE -> Icons.Default.LocalFireDepartment
+                    AchievementIcon.DIAMOND -> Icons.Default.WorkspacePremium
+                    AchievementIcon.CROWN -> Icons.Default.Star
+                    AchievementIcon.BOOK -> Icons.Default.Star
+                    AchievementIcon.LIGHTNING -> Icons.Default.Star
                 },
                 contentDescription = null,
                 tint = if (achievement.isUnlocked)

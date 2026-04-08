@@ -121,7 +121,18 @@ fun LearningScreen(
             }
 
             is LearningState.Testing -> {
-                // 测试状态（后续实现）
+                // 测试状态 - 使用 QuizScreen
+            }
+
+            is LearningState.QuizResult -> {
+                // 测试结果状态
+                LearningCompletedContent(
+                    learned = state.correctCount,
+                    reviewed = state.totalCount - state.correctCount,
+                    accuracy = state.accuracy,
+                    onContinue = { viewModel.resetLearning() },
+                    onGoHome = onNavigateBack
+                )
             }
 
             is LearningState.Error -> {

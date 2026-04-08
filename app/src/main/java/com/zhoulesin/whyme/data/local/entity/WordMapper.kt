@@ -15,8 +15,12 @@ fun WordEntity.toDomain(): Word = Word(
     translation = translation,
     masteryLevel = masteryLevel,
     isFavorite = isFavorite,
+    isLearned = isLearned,
+    isNew = isNew,
     nextReviewDate = nextReviewDate?.let { LocalDate.ofEpochDay(it) },
-    reviewCount = reviewCount
+    reviewCount = reviewCount,
+    correctCount = correctCount,
+    wordBank = wordBank
 )
 
 fun Word.toEntity(): WordEntity = WordEntity(
@@ -28,8 +32,12 @@ fun Word.toEntity(): WordEntity = WordEntity(
     translation = translation,
     masteryLevel = masteryLevel,
     isFavorite = isFavorite,
+    isLearned = isLearned,
+    isNew = isNew,
     nextReviewDate = nextReviewDate?.toEpochDay(),
-    reviewCount = reviewCount
+    reviewCount = reviewCount,
+    correctCount = correctCount,
+    wordBank = wordBank
 )
 
 fun List<WordEntity>.toDomainList(): List<Word> = map { it.toDomain() }
