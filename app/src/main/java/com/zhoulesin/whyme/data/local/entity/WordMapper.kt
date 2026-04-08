@@ -1,6 +1,7 @@
 package com.zhoulesin.whyme.data.local.entity
 
 import com.zhoulesin.whyme.domain.model.Word
+import com.zhoulesin.whyme.domain.model.WordLevel
 import java.time.LocalDate
 
 /**
@@ -20,7 +21,8 @@ fun WordEntity.toDomain(): Word = Word(
     nextReviewDate = nextReviewDate?.let { LocalDate.ofEpochDay(it) },
     reviewCount = reviewCount,
     correctCount = correctCount,
-    wordBank = wordBank
+    wordBank = wordBank,
+    level = WordLevel.fromName(level)
 )
 
 fun Word.toEntity(): WordEntity = WordEntity(
@@ -37,7 +39,8 @@ fun Word.toEntity(): WordEntity = WordEntity(
     nextReviewDate = nextReviewDate?.toEpochDay(),
     reviewCount = reviewCount,
     correctCount = correctCount,
-    wordBank = wordBank
+    wordBank = wordBank,
+    level = level.name
 )
 
 fun List<WordEntity>.toDomainList(): List<Word> = map { it.toDomain() }

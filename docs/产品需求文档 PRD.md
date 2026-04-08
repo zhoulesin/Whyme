@@ -41,11 +41,41 @@
 - **记忆曲线复习**：基于艾宾浩斯遗忘曲线自动安排复习
 - **生词本**：收藏不熟悉的单词进行重点复习
 - **单词测试**：中英互译、选择、拼写等多种题型
+- **词库级别切换**：支持多级别词库，用户可主动切换学习范围
 
-#### 学习流程
+#### 词库级别系统
+
+**设计背景**：用户群体跨度大（从零基础到高级），不同用户需要不同难度的单词。使用固定词库无法满足个性化需求。
+
+**词库级别定义**：
+
+| 级别 | 名称 | 词汇量 | 适用场景 | 示例词库 |
+|------|------|--------|----------|----------|
+| L1 | 小学水平 | ~1000词 | 零基础入门 | 人教版小学词汇 |
+| L2 | 初中水平 | ~2000词 | 基础巩固 | 人教版初中词汇 |
+| L3 | 高中水平 | ~3500词 | 高考备考 | 人教版高中词汇 |
+| L4 | 大学四级 | ~4500词 | CET-4 备考 | CET-4 核心词汇 |
+| L5 | 大学六级 | ~5500词 | CET-6 备考 | CET-6 核心词汇 |
+| L6 | 雅思/托福 | ~8000词 | 留学/移民 | 雅思/托福高频词 |
+| L7 | 考研必备 | ~5500词 | 考研备考 | 考研大纲词汇 |
+| L8 | 专业英语 | 10000+词 | 商务/学术 | GRE/学术词汇 |
+
+**用户级别选择机制**：
+1. **首次使用**：引导用户选择初始级别（通过水平测试或自评）
+2. **级别切换**：用户可在设置中随时切换当前学习的词库级别
+3. **跨级学习**：用户可同时开启多个级别的词库进行学习
+4. **推荐升级**：当用户连续3天完成目标且正确率>85%时，推荐进入下一级别
+
+**学习流程**
 ```
 学习新词 → 理解释义 → 例句应用 → 记忆强化 → 阶段测试
 ```
+
+**词库切换交互**：
+- 入口：首页顶部 / 学习中心顶部
+- 切换方式：下拉选择器选择当前学习级别
+- 视觉反馈：切换后立即更新学习内容范围
+- 进度独立：每个级别的学习进度独立记录
 
 ### 3.2 口语练习模块
 
@@ -159,7 +189,38 @@ data class Word(
     val definition: String,
     val example: String,
     val translation: String,
-    val masteryLevel: Int  // 0-5 掌握程度
+    val masteryLevel: Int,  // 0-5 掌握程度
+    val wordBank: String,   // 来源词库名称
+    val level: WordLevel    // 词库级别枚举
+)
+
+// 词库级别枚举
+enum class WordLevel(val displayName: String, val description: String) {
+    L1_PRIMARY("小学", "小学阶段基础词汇"),
+    L2_JUNIOR("初中", "初中阶段核心词汇"),
+    L3_SENIOR("高中", "高中阶段必考词汇"),
+    L4_CET4("四级", "大学英语四级词汇"),
+    L5_CET6("六级", "大学英语六级词汇"),
+    L6_IELTS_TOEFL("雅思/托福", "留学考试高频词汇"),
+    L7_KAOYAN("考研", "研究生入学考试词汇"),
+    L8_GRE("GRE", "美国研究生入学考试词汇")
+}
+
+// 用户词库选择
+data class UserWordBankSettings(
+    val userId: Long,
+    val currentLevel: WordLevel,      // 当前学习级别
+    val enabledLevels: Set<WordLevel>, // 已开启的级别
+    val levelProgress: Map<WordLevel, LevelProgress> // 各级别进度
+)
+
+// 级别进度
+data class LevelProgress(
+    val level: WordLevel,
+    val totalWords: Int,              // 词库总词数
+    val learnedWords: Int,            // 已学习词数
+    val masteredWords: Int,           // 已掌握词数
+    val lastStudyDate: LocalDate?      // 最近学习日期
 )
 
 // 学习记录
@@ -167,8 +228,58 @@ data class LearningRecord(
     val date: LocalDate,
     val wordsLearned: Int,
     val wordsReviewed: Int,
-    val duration: Long  // 秒
+    val duration: Long,  // 秒
+    val level: WordLevel // 学习所属级别
 )
+```
+
+### 5.4 数据库表设计
+
+```sql
+-- 单词表
+CREATE TABLE words (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    word TEXT NOT NULL,
+    phonetic TEXT,
+    definition TEXT,
+    example TEXT,
+    translation TEXT NOT NULL,
+    word_bank TEXT NOT NULL,
+    level TEXT NOT NULL
+);
+
+-- 用户词库设置表
+CREATE TABLE user_word_bank_settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    current_level TEXT NOT NULL DEFAULT 'L3_SENIOR',
+    enabled_levels TEXT NOT NULL DEFAULT '["L3_SENIOR"]'
+);
+
+-- 用户级别进度表
+CREATE TABLE level_progress (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    level TEXT NOT NULL UNIQUE,
+    total_words INTEGER DEFAULT 0,
+    learned_words INTEGER DEFAULT 0,
+    mastered_words INTEGER DEFAULT 0,
+    last_study_date TEXT
+);
+
+-- 用户单词学习进度表（按级别索引）
+CREATE TABLE word_progress (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    word_id INTEGER NOT NULL,
+    level TEXT NOT NULL,
+    mastery_level INTEGER DEFAULT 0,
+    is_learned INTEGER DEFAULT 0,
+    is_favorite INTEGER DEFAULT 0,
+    review_count INTEGER DEFAULT 0,
+    correct_count INTEGER DEFAULT 0,
+    next_review_date TEXT,
+    last_review_date TEXT,
+    FOREIGN KEY (word_id) REFERENCES words(id),
+    UNIQUE(word_id, level)
+);
 ```
 
 ---
@@ -184,6 +295,8 @@ data class LearningRecord(
 | 单词测试 | 简单的中英互译测试 | P0 |
 | 生词本 | 收藏和管理生词 | P1 |
 | 学习统计 | 今日/本周学习数据 | P1 |
+| **词库级别切换** | **支持多级别词库切换** | **P0** |
+| **级别进度管理** | **独立记录每个级别的学习进度** | **P1** |
 
 ### 第二阶段：增强 (2-3周)
 **目标**：提升学习效果
@@ -242,7 +355,15 @@ data class LearningRecord(
 
 ---
 
-**文档版本**：v1.0  
+**文档版本**：v2.0  
 **创建日期**：2026-04-08  
+**更新日期**：2026-04-08  
 **负责人**：产品团队  
 **状态**：待评审
+
+### 更新日志
+
+| 版本 | 日期 | 更新内容 |
+|------|------|----------|
+| v1.0 | 2026-04-08 | 初始版本，定义核心功能 |
+| v2.0 | 2026-04-08 | 新增词库级别系统，支持多级别词库切换 |

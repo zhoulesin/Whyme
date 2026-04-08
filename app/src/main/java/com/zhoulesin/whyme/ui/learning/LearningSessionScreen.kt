@@ -41,8 +41,9 @@ fun LearningSessionScreen(
     }
 
     // 解析模式并开始学习
-    LaunchedEffect(uiState.wordsToLearn, uiState.wordsForReview, mode, sessionStarted) {
+    LaunchedEffect(uiState.wordsToLearn, uiState.wordsForReview, mode, sessionStarted, uiState.isDataLoaded) {
         if (sessionStarted) return@LaunchedEffect
+        if (!uiState.isDataLoaded) return@LaunchedEffect
 
         val hasWordsToReview = uiState.wordsForReview.isNotEmpty()
         val hasWordsToLearn = uiState.wordsToLearn.isNotEmpty()
@@ -140,19 +141,50 @@ fun LearningSessionScreen(
         ) {
             when (val state = uiState.learningState) {
                 is LearningState.Idle -> {
-                    // 空闲状态 - 等待数据加载
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        CircularProgressIndicator()
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "正在加载单词...",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    // 空闲状态 - 等待数据加载或显示空状态
+                    if (!uiState.isDataLoaded) {
+                        // 正在加载
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            CircularProgressIndicator()
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "正在加载单词...",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    } else {
+                        // 数据加载完成但没有单词
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = "🎉",
+                                style = MaterialTheme.typography.displayLarge
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "太棒了！",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "今日学习任务已完成",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
+                            OutlinedButton(onClick = onNavigateBack) {
+                                Text("返回首页")
+                            }
+                        }
                     }
                 }
 

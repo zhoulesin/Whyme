@@ -6,6 +6,7 @@ import com.zhoulesin.whyme.data.local.entity.toDomainList
 import com.zhoulesin.whyme.data.local.entity.toEntity
 import com.zhoulesin.whyme.domain.model.ReviewResult
 import com.zhoulesin.whyme.domain.model.Word
+import com.zhoulesin.whyme.domain.model.WordLevel
 import com.zhoulesin.whyme.domain.repository.WordRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -24,11 +25,11 @@ class WordRepositoryImpl @Inject constructor(
     override fun getAllWords(): Flow<List<Word>> =
         wordDao.getAllWords().map { it.toDomainList() }
 
-    override fun getWordsForReview(limit: Int): Flow<List<Word>> =
-        wordDao.getWordsForReview(LocalDate.now().toEpochDay(), limit).map { it.toDomainList() }
+    override fun getWordsForReview(limit: Int, level: WordLevel?): Flow<List<Word>> =
+        wordDao.getWordsForReview(LocalDate.now().toEpochDay(), limit, level?.name).map { it.toDomainList() }
 
-    override fun getTodayNewWords(limit: Int): Flow<List<Word>> =
-        wordDao.getNewWords(limit).map { it.toDomainList() }
+    override fun getTodayNewWords(limit: Int, level: WordLevel?): Flow<List<Word>> =
+        wordDao.getNewWords(limit, level?.name).map { it.toDomainList() }
 
     override fun getTodayLearnedWords(): Flow<List<Word>> {
         val todayStart = LocalDate.now().atStartOfDay().toEpochSecond(java.time.ZoneOffset.systemDefault().rules.getOffset(java.time.Instant.now())) * 1000

@@ -2,6 +2,7 @@ package com.zhoulesin.whyme.domain.repository
 
 import com.zhoulesin.whyme.domain.model.ReviewResult
 import com.zhoulesin.whyme.domain.model.Word
+import com.zhoulesin.whyme.domain.model.WordLevel
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
@@ -17,13 +18,16 @@ interface WordRepository {
     /**
      * 获取需要复习的单词
      * @param limit 每日复习上限
+     * @param level 词库级别（可选）
      */
-    fun getWordsForReview(limit: Int = 50): Flow<List<Word>>
+    fun getWordsForReview(limit: Int = 50, level: WordLevel? = null): Flow<List<Word>>
 
     /**
      * 获取今日新学单词
+     * @param limit 限制数量
+     * @param level 词库级别（可选）
      */
-    fun getTodayNewWords(limit: Int): Flow<List<Word>>
+    fun getTodayNewWords(limit: Int, level: WordLevel? = null): Flow<List<Word>>
 
     /**
      * 获取今日已学习的单词

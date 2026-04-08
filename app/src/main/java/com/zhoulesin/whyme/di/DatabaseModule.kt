@@ -8,6 +8,8 @@ import com.zhoulesin.whyme.data.local.AppDatabase
 import com.zhoulesin.whyme.data.local.DatabaseInitializer
 import com.zhoulesin.whyme.data.local.dao.LearningRecordDao
 import com.zhoulesin.whyme.data.local.dao.WordDao
+import com.zhoulesin.whyme.data.local.dao.UserWordBankSettingsDao
+import com.zhoulesin.whyme.data.local.dao.LevelProgressDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -63,5 +65,17 @@ object DatabaseModule {
     @Singleton
     fun provideLearningRecordDao(database: AppDatabase): LearningRecordDao {
         return database.learningRecordDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideUserWordBankSettingsDao(database: AppDatabase): UserWordBankSettingsDao {
+        return database.userWordBankSettingsDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideLevelProgressDao(database: AppDatabase): LevelProgressDao {
+        return database.levelProgressDao()
     }
 }

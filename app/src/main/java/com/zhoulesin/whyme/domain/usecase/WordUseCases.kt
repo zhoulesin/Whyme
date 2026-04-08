@@ -3,8 +3,10 @@ package com.zhoulesin.whyme.domain.usecase
 import com.zhoulesin.whyme.domain.model.Word
 import com.zhoulesin.whyme.domain.model.ReviewResult
 import com.zhoulesin.whyme.domain.model.DailyLimits
+import com.zhoulesin.whyme.domain.model.WordLevel
 import com.zhoulesin.whyme.domain.repository.WordRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 import javax.inject.Inject
 
@@ -17,9 +19,10 @@ class GetWordsForLearningUseCase @Inject constructor(
     /**
      * 获取今日待学习的新词
      * @param limit 每日新词上限
+     * @param level 词库级别（可选）
      */
-    operator fun invoke(limit: Int = DailyLimits.DEFAULT_NEW_WORDS_LIMIT): Flow<List<Word>> =
-        wordRepository.getTodayNewWords(limit)
+    operator fun invoke(limit: Int = DailyLimits.DEFAULT_NEW_WORDS_LIMIT, level: WordLevel? = null): Flow<List<Word>> =
+        wordRepository.getTodayNewWords(limit, level)
 }
 
 class GetWordsForReviewUseCase @Inject constructor(
@@ -28,15 +31,19 @@ class GetWordsForReviewUseCase @Inject constructor(
     /**
      * 获取今日需要复习的单词
      * @param limit 每日复习上限
+     * @param level 词库级别（可选）
      */
-    operator fun invoke(limit: Int = DailyLimits.DEFAULT_REVIEW_LIMIT): Flow<List<Word>> =
-        wordRepository.getWordsForReview(limit)
+    operator fun invoke(limit: Int = DailyLimits.DEFAULT_REVIEW_LIMIT, level: WordLevel? = null): Flow<List<Word>> =
+        wordRepository.getWordsForReview(limit, level)
 }
 
 class GetFavoriteWordsUseCase @Inject constructor(
     private val wordRepository: WordRepository
 ) {
-    operator fun invoke(): Flow<List<Word>> = wordRepository.getFavoriteWords()
+    operator fun invoke(level: WordLevel? = null): Flow<List<Word>> =
+        wordRepository.getFavoriteWords().map { words ->
+            if (level != null) words.filter { it.level == level } else words
+        }
 }
 
 class UpdateWordReviewUseCase @Inject constructor(

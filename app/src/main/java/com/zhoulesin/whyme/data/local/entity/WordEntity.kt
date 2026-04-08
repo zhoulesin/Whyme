@@ -40,5 +40,6 @@ data class WordEntity(
     val lastReviewedAt: Long? = null,   // 上次复习时间
 
     // 来源词库
-    val wordBank: String? = null         // 来源词库名称
+    val wordBank: String? = null,        // 来源词库名称
+    val level: String = "L3_SENIOR"      // 词库级别
 )

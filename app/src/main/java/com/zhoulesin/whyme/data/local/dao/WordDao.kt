@@ -5,6 +5,14 @@ import com.zhoulesin.whyme.data.local.entity.WordEntity
 import kotlinx.coroutines.flow.Flow
 
 /**
+ * 级别单词数量
+ */
+data class LevelWordCount(
+    val level: String,
+    val count: Int
+)
+
+/**
  * 单词数据访问对象
  */
 @Dao
@@ -16,27 +24,32 @@ interface WordDao {
      * 获取需要复习的单词
      * @param today 今天的 Epoch day
      * @param limit 每日复习上限
+     * @param level 词库级别（可选）
      */
     @Query("""
         SELECT * FROM words
         WHERE nextReviewDate IS NOT NULL
         AND nextReviewDate <= :today
         AND masteryLevel < 5
+        AND (:level IS NULL OR level = :level)
         ORDER BY nextReviewDate ASC
         LIMIT :limit
     """)
-    fun getWordsForReview(today: Long, limit: Int): Flow<List<WordEntity>>
+    fun getWordsForReview(today: Long, limit: Int, level: String? = null): Flow<List<WordEntity>>
 
     /**
      * 获取新词（未学习过的单词）
+     * @param limit 限制数量
+     * @param level 词库级别（可选）
      */
     @Query("""
         SELECT * FROM words
         WHERE isNew = 1
+        AND (:level IS NULL OR level = :level)
         ORDER BY RANDOM()
         LIMIT :limit
     """)
-    fun getNewWords(limit: Int): Flow<List<WordEntity>>
+    fun getNewWords(limit: Int, level: String? = null): Flow<List<WordEntity>>
 
     /**
      * 获取今日已学习的单词
@@ -104,6 +117,30 @@ interface WordDao {
      */
     @Query("SELECT COUNT(*) FROM words WHERE masteryLevel = 0")
     suspend fun getUnknownWordCount(): Int
+    
+    /**
+     * 按级别获取单词总数
+     */
+    @Query("SELECT COUNT(*) FROM words WHERE level = :level")
+    suspend fun getWordCountByLevel(level: String): Int
+    
+    /**
+     * 按级别获取已掌握单词数
+     */
+    @Query("SELECT COUNT(*) FROM words WHERE level = :level AND masteryLevel >= 4")
+    suspend fun getMasteredWordCountByLevel(level: String): Int
+    
+    /**
+     * 按级别获取已学习单词数
+     */
+    @Query("SELECT COUNT(*) FROM words WHERE level = :level AND isLearned = 1")
+    suspend fun getLearnedWordCountByLevel(level: String): Int
+    
+    /**
+     * 获取所有级别的单词数量
+     */
+    @Query("SELECT level, COUNT(*) as count FROM words GROUP BY level")
+    suspend fun getWordCountByAllLevels(): List<LevelWordCount>
 
     /**
      * 今日新词学习数量

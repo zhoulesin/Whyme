@@ -17,13 +17,17 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zhoulesin.whyme.ui.components.CircularProgressRing
 import com.zhoulesin.whyme.ui.components.StatItem
+import com.zhoulesin.whyme.ui.components.WordLevelSelector
+import com.zhoulesin.whyme.ui.wordbank.WordBankViewModel
 
 @Composable
 fun HomeScreen(
     onNavigateToLearning: () -> Unit,
-    viewModel: HomeViewModel = hiltViewModel()
+    viewModel: HomeViewModel = hiltViewModel(),
+    wordBankViewModel: WordBankViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val wordBankState by wordBankViewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -42,8 +46,19 @@ fun HomeScreen(
             text = "今天也要继续加油哦～",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 24.dp)
+            modifier = Modifier.padding(bottom = 16.dp)
         )
+
+        // 词库级别选择器
+        WordLevelSelector(
+            currentLevel = wordBankState.currentLevel,
+            onLevelSelected = { level ->
+                wordBankViewModel.setCurrentLevel(level)
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         // 今日学习进度
         TodayProgressCard(

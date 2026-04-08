@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhoulesin.whyme.domain.model.*
 import com.zhoulesin.whyme.domain.repository.WordRepository
+import com.zhoulesin.whyme.domain.repository.WordBankRepository
 import com.zhoulesin.whyme.domain.usecase.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -35,7 +36,10 @@ data class LearningUiState(
     // 统计数据
     val masteredCount: Int = 0,
     val learningCount: Int = 0,
-    val unknownCount: Int = 0
+    val unknownCount: Int = 0,
+    
+    // 数据加载状态
+    val isDataLoaded: Boolean = false
 )
 
 /**
@@ -73,7 +77,8 @@ class LearningViewModel @Inject constructor(
     private val updateWordReviewUseCase: UpdateWordReviewUseCase,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
     private val recordLearningSessionUseCase: RecordLearningSessionUseCase,
-    private val wordRepository: WordRepository
+    private val wordRepository: WordRepository,
+    private val wordBankRepository: WordBankRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LearningUiState())
@@ -82,21 +87,37 @@ class LearningViewModel @Inject constructor(
     // 测验使用的单词池
     private var quizWordPool: List<Word> = emptyList()
 
+    // 当前学习的级别
+    private var currentLevel: WordLevel? = null
+
     init {
-        loadWords()
+        loadCurrentLevel()
         loadStats()
     }
 
-    private fun loadWords() {
+    private fun loadCurrentLevel() {
         viewModelScope.launch {
+            wordBankRepository.getCurrentLevel().collect { level ->
+                currentLevel = level
+                loadWords(level)
+            }
+        }
+    }
+
+    private fun loadWords(level: WordLevel? = null) {
+        viewModelScope.launch {
+            // 订阅数据变化
             combine(
-                getWordsForLearningUseCase(),
-                getWordsForReviewUseCase(),
-                getFavoriteWordsUseCase(),
+                getWordsForLearningUseCase(level = level),
+                getWordsForReviewUseCase(level = level),
+                getFavoriteWordsUseCase(level = level),
                 wordRepository.getAllWords()
             ) { toLearn, toReview, favorites, all ->
-                // 过滤已学习的单词用于测试
-                val learnedWords = all.filter { it.isLearned || it.reviewCount > 0 }
+                // 过滤已学习的单词用于测试（按级别筛选）
+                val filteredAll = if (level != null) {
+                    all.filter { it.level == level }
+                } else all
+                val learnedWords = filteredAll.filter { it.isLearned || it.reviewCount > 0 }
                 Quad(toLearn, toReview, favorites, learnedWords)
             }.collect { (toLearn, toReview, favorites, learnedWords) ->
                 _uiState.update { state ->
@@ -104,7 +125,8 @@ class LearningViewModel @Inject constructor(
                         wordsToLearn = toLearn,
                         wordsForReview = toReview,
                         favoriteWords = favorites,
-                        allLearnedWords = learnedWords
+                        allLearnedWords = learnedWords,
+                        isDataLoaded = true
                     )
                 }
             }
