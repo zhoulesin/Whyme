@@ -6,6 +6,7 @@ import com.google.gson.reflect.TypeToken
 import com.zhoulesin.whyme.data.local.dao.WordDao
 import com.zhoulesin.whyme.data.local.entity.WordEntity
 import com.zhoulesin.whyme.data.local.entity.WordJson
+import com.zhoulesin.whyme.domain.model.WordLevel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.InputStreamReader
@@ -18,14 +19,21 @@ class DatabaseInitializer(
 ) {
     private val gson = Gson()
 
-    // 词库文件列表
+    private data class WordSource(
+        val fileName: String,
+        val wordBank: String,
+        val level: WordLevel
+    )
+
+    // 词库文件列表。
+    // 同一个单词允许同时存在于多个级别中，因此这里不做跨词库去重。
     private val wordFiles = listOf(
-        "words/cet4.json",
-        "words/CET6.json",
-        "words/GaoZhong.json",
-        "words/KaoYan.json",
-        "words/TOEFL.json",
-        "words/GRE.json"
+        WordSource("words/GaoZhong.json", "高中词汇", WordLevel.GAOZHONG),
+        WordSource("words/cet4.json", "CET4", WordLevel.CET4),
+        WordSource("words/CET6.json", "CET6", WordLevel.CET6),
+        WordSource("words/KaoYan.json", "考研词汇", WordLevel.KAOYAN),
+        WordSource("words/TOEFL.json", "托福词汇", WordLevel.TOEFL),
+        WordSource("words/GRE.json", "GRE词汇", WordLevel.GRE)
     )
 
     /**
@@ -44,33 +52,30 @@ class DatabaseInitializer(
         withContext(Dispatchers.IO) {
             val words = mutableListOf<WordEntity>()
 
-            for (fileName in wordFiles) {
+            for (source in wordFiles) {
                 try {
-                    val wordsFromFile = loadWordsFromAsset(fileName)
+                    val wordsFromFile = loadWordsFromAsset(source)
                     words.addAll(wordsFromFile)
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
             }
 
-            // 去重（根据单词）
-            val uniqueWords = words.distinctBy { it.word.lowercase() }
-
             // 批量插入
-            wordDao.insertWords(uniqueWords)
+            wordDao.insertWords(words)
         }
     }
 
     /**
      * 从assets加载词库文件
      */
-    private fun loadWordsFromAsset(fileName: String): List<WordEntity> {
+    private fun loadWordsFromAsset(source: WordSource): List<WordEntity> {
         return try {
-            context.assets.open(fileName).use { inputStream ->
+            context.assets.open(source.fileName).use { inputStream ->
                 InputStreamReader(inputStream).use { reader ->
                     val type = object : TypeToken<List<WordJson>>() {}.type
                     val wordJsonList: List<WordJson> = gson.fromJson(reader, type)
-                    wordJsonList.map { it.toWordEntity() }
+                    wordJsonList.map { it.toWordEntity(source) }
                 }
             }
         } catch (e: Exception) {
@@ -82,7 +87,7 @@ class DatabaseInitializer(
     /**
      * 将WordJson转换为WordEntity
      */
-    private fun WordJson.toWordEntity(): WordEntity {
+    private fun WordJson.toWordEntity(source: WordSource): WordEntity {
         // 合并所有翻译
         val definition = translations.joinToString("; ") {
             if (it.type.isNotEmpty()) "${it.type}. ${it.translation}" else it.translation
@@ -106,7 +111,9 @@ class DatabaseInitializer(
             phonetic = phonetic,
             definition = definition,
             example = example,
-            translation = translations.firstOrNull()?.translation ?: ""
+            translation = translations.firstOrNull()?.translation ?: "",
+            wordBank = source.wordBank,
+            level = source.level.name
         )
     }
 }

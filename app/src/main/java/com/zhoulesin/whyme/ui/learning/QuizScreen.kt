@@ -55,7 +55,7 @@ fun QuizScreen(
                 is LearningState.Idle -> {
                     // 开始测试
                     QuizStartContent(
-                        wordCount = uiState.wordsToLearn.size + uiState.allLearnedWords.size,
+                        wordCount = uiState.allLearnedWords.size,
                         onStartQuiz = { viewModel.startQuiz() }
                     )
                 }
@@ -88,7 +88,7 @@ fun QuizScreen(
                 else -> {
                     // 其他状态，显示开始测试
                     QuizStartContent(
-                        wordCount = uiState.wordsToLearn.size + uiState.allLearnedWords.size,
+                        wordCount = uiState.allLearnedWords.size,
                         onStartQuiz = { viewModel.startQuiz() }
                     )
                 }
@@ -148,7 +148,7 @@ private fun QuizStartContent(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "• 看单词，选中文释义\n• 共 10 道选择题\n• 正确率影响后续复习安排",
+                    text = "• 从全部已学习单词中出题\n• 共 10 道选择题\n• 正确率影响后续复习安排",
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Start
                 )

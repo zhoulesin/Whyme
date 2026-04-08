@@ -10,6 +10,6 @@ import androidx.room.PrimaryKey
 data class UserWordBankSettingsEntity(
     @PrimaryKey
     val id: Long = 1, // 只有一个用户，所以用固定 ID
-    val currentLevel: String = "L3_SENIOR",
-    val enabledLevels: String = "[\"L3_SENIOR\"]" // JSON 数组存储
+    val currentLevel: String = "GAOZHONG",
+    val enabledLevels: String = "[\"GAOZHONG\"]" // JSON 数组存储
 )

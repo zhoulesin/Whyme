@@ -66,6 +66,13 @@
 3. **跨级学习**：用户可同时开启多个级别的词库进行学习
 4. **推荐升级**：当用户连续3天完成目标且正确率>85%时，推荐进入下一级别
 
+**分级使用规则**：
+- **学习新词**：仅从当前选择的级别中抽取新词，保证新输入内容聚焦
+- **复习巩固**：面向所有“已学习过”的单词统一安排，不因当前级别切换而中断
+- **单词测试**：默认以所有“已学习过”的单词为测试范围，不区分当前级别
+- **级别进度**：按级别独立展示学习覆盖率与掌握率，用于观察当前词库学习进展
+- **全局统计**：学习时长、连续打卡、累计学习量等核心指标按全局统计
+
 **学习流程**
 ```
 学习新词 → 理解释义 → 例句应用 → 记忆强化 → 阶段测试
@@ -74,8 +81,9 @@
 **词库切换交互**：
 - 入口：首页顶部 / 学习中心顶部
 - 切换方式：下拉选择器选择当前学习级别
-- 视觉反馈：切换后立即更新学习内容范围
-- 进度独立：每个级别的学习进度独立记录
+- 视觉反馈：切换后立即更新“新词学习”内容范围
+- 复习与测试：不受当前级别限制，始终覆盖全部已学习单词
+- 进度独立：每个级别独立展示词库覆盖进度，但单词复习链路保持全局连续
 
 ### 3.2 口语练习模块
 
@@ -229,7 +237,7 @@ data class LearningRecord(
     val wordsLearned: Int,
     val wordsReviewed: Int,
     val duration: Long,  // 秒
-    val level: WordLevel // 学习所属级别
+    val currentLearningLevel: WordLevel? // 当次新词学习所选级别（可选，用于分析）
 )
 ```
 
@@ -269,7 +277,6 @@ CREATE TABLE level_progress (
 CREATE TABLE word_progress (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     word_id INTEGER NOT NULL,
-    level TEXT NOT NULL,
     mastery_level INTEGER DEFAULT 0,
     is_learned INTEGER DEFAULT 0,
     is_favorite INTEGER DEFAULT 0,
@@ -278,7 +285,7 @@ CREATE TABLE word_progress (
     next_review_date TEXT,
     last_review_date TEXT,
     FOREIGN KEY (word_id) REFERENCES words(id),
-    UNIQUE(word_id, level)
+    UNIQUE(word_id)
 );
 ```
 

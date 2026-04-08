@@ -11,7 +11,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.zhoulesin.whyme.ui.home.HomeScreen
 import com.zhoulesin.whyme.ui.learning.LearningScreen
-import com.zhoulesin.whyme.ui.learning.LearningSessionScreen
+import com.zhoulesin.whyme.ui.learning.ReviewSessionScreen
+import com.zhoulesin.whyme.ui.learning.StudySessionScreen
 import com.zhoulesin.whyme.ui.learning.WordDetailScreen
 import com.zhoulesin.whyme.ui.learning.QuizScreen
 import com.zhoulesin.whyme.ui.profile.ProfileScreen
@@ -35,8 +36,10 @@ fun AppNavHost(
         composable(Screen.Home.route) {
             HomeScreen(
                 onNavigateToLearning = {
-                    // 首页默认进入自动模式（复习优先）
-                    navController.navigate(Screen.LearningSession.createRoute("AUTO"))
+                    navController.navigate(Screen.LearningStudy.route)
+                },
+                onNavigateToReview = {
+                    navController.navigate(Screen.LearningReview.route)
                 }
             )
         }
@@ -45,7 +48,12 @@ fun AppNavHost(
         composable(Screen.Learning.route) {
             LearningScreen(
                 onNavigateToLearningSession = { mode ->
-                    navController.navigate(Screen.LearningSession.createRoute(mode.name))
+                    val route = when (mode) {
+                        LearningModeType.LEARN -> Screen.LearningStudy.route
+                        LearningModeType.REVIEW -> Screen.LearningReview.route
+                        LearningModeType.QUIZ -> Screen.Quiz.route
+                    }
+                    navController.navigate(route)
                 },
                 onNavigateToWordDetail = { wordId ->
                     navController.navigate(Screen.WordDetail.createRoute(wordId))
@@ -53,19 +61,19 @@ fun AppNavHost(
             )
         }
 
-        // 学习会话页面（二级页面）
-        composable(
-            route = Screen.LearningSession.route,
-            arguments = listOf(
-                navArgument("mode") {
-                    type = NavType.StringType
-                    defaultValue = "AUTO"
+        composable(Screen.LearningStudy.route) {
+            StudySessionScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToWordDetail = { wordId ->
+                    navController.navigate(Screen.WordDetail.createRoute(wordId))
                 }
             )
-        ) { backStackEntry ->
-            val mode = backStackEntry.arguments?.getString("mode") ?: "AUTO"
-            LearningSessionScreen(
-                mode = mode,
+        }
+
+        composable(Screen.LearningReview.route) {
+            ReviewSessionScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 },

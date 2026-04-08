@@ -20,7 +20,7 @@ data class Word(
     val reviewCount: Int = 0,
     val correctCount: Int = 0,       // 正确次数
     val wordBank: String? = null,      // 来源词库
-    val level: WordLevel = WordLevel.L3_SENIOR  // 词库级别
+    val level: WordLevel = WordLevel.DEFAULT  // 词库级别
 ) {
     val isMastered: Boolean get() = masteryLevel >= 4
     val needsReview: Boolean get() = nextReviewDate?.let { it <= LocalDate.now() } ?: true

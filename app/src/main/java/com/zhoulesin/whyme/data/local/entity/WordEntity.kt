@@ -41,5 +41,5 @@ data class WordEntity(
 
     // 来源词库
     val wordBank: String? = null,        // 来源词库名称
-    val level: String = "L3_SENIOR"      // 词库级别
+    val level: String = "GAOZHONG"      // 词库级别
 )

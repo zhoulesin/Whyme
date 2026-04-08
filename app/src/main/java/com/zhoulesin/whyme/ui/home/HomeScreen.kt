@@ -23,6 +23,7 @@ import com.zhoulesin.whyme.ui.wordbank.WordBankViewModel
 @Composable
 fun HomeScreen(
     onNavigateToLearning: () -> Unit,
+    onNavigateToReview: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
     wordBankViewModel: WordBankViewModel = hiltViewModel()
 ) {
@@ -84,7 +85,7 @@ fun HomeScreen(
         if (uiState.wordsForReview.isNotEmpty()) {
             ReviewReminderCard(
                 count = uiState.wordsForReview.size,
-                onReview = onNavigateToLearning
+                onReview = onNavigateToReview
             )
             Spacer(modifier = Modifier.height(16.dp))
         }

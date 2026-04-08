@@ -21,7 +21,7 @@ import com.zhoulesin.whyme.data.local.entity.LevelProgressEntity
         UserWordBankSettingsEntity::class,
         LevelProgressEntity::class
     ],
-    version = 3,
+    version = 1,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

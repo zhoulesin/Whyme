@@ -26,7 +26,7 @@ import com.zhoulesin.whyme.ui.components.MasteryButtons
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LearningSessionScreen(
-    mode: String = "auto",
+    mode: String = "LEARN",
     onNavigateBack: () -> Unit,
     onNavigateToWordDetail: (Long) -> Unit,
     viewModel: LearningViewModel = hiltViewModel()
@@ -40,7 +40,7 @@ fun LearningSessionScreen(
         viewModel.initSession()
     }
 
-    // 解析模式并开始学习
+    // 进入对应页面后启动固定流程
     LaunchedEffect(uiState.wordsToLearn, uiState.wordsForReview, mode, sessionStarted, uiState.isDataLoaded) {
         if (sessionStarted) return@LaunchedEffect
         if (!uiState.isDataLoaded) return@LaunchedEffect
@@ -65,21 +65,9 @@ fun LearningSessionScreen(
                 }
             }
             "QUIZ" -> {
-                if (hasWordsToLearn || hasWordsToReview) {
+                if (uiState.allLearnedWords.isNotEmpty()) {
                     viewModel.startQuiz()
                     sessionStarted = true
-                }
-            }
-            else -> { // AUTO
-                when {
-                    hasWordsToReview -> {
-                        viewModel.startReview()
-                        sessionStarted = true
-                    }
-                    hasWordsToLearn -> {
-                        viewModel.startLearning()
-                        sessionStarted = true
-                    }
                 }
             }
         }
@@ -116,6 +104,20 @@ fun LearningSessionScreen(
         "REVIEW" -> "复习旧词"
         "QUIZ" -> "单词测试"
         else -> "学习中"
+    }
+
+    val idleTitle = when (mode.uppercase()) {
+        "LEARN" -> "当前级别暂无可学新词"
+        "REVIEW" -> "当前没有待复习单词"
+        "QUIZ" -> "当前没有可测试的已学单词"
+        else -> "当前没有学习内容"
+    }
+
+    val idleDescription = when (mode.uppercase()) {
+        "LEARN" -> "可以切换词库级别，或前往学习中心查看其他学习入口。"
+        "REVIEW" -> "继续保持，系统会在需要时自动安排复习。"
+        "QUIZ" -> "请先完成一些学习或复习，再回来测试。"
+        else -> "请返回上一页重新选择学习模式。"
     }
 
     Scaffold(
@@ -176,13 +178,19 @@ fun LearningSessionScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "今日学习任务已完成",
+                                text = idleTitle,
                                 style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = idleDescription,
+                                style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Spacer(modifier = Modifier.height(24.dp))
                             OutlinedButton(onClick = onNavigateBack) {
-                                Text("返回首页")
+                                Text("返回")
                             }
                         }
                     }

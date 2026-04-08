@@ -29,7 +29,7 @@ class WordRepositoryImpl @Inject constructor(
         wordDao.getWordsForReview(LocalDate.now().toEpochDay(), limit, level?.name).map { it.toDomainList() }
 
     override fun getTodayNewWords(limit: Int, level: WordLevel?): Flow<List<Word>> =
-        wordDao.getNewWords(limit, level?.name).map { it.toDomainList() }
+        wordDao.getLearningWords(limit, level?.name).map { it.toDomainList() }
 
     override fun getTodayLearnedWords(): Flow<List<Word>> {
         val todayStart = LocalDate.now().atStartOfDay().toEpochSecond(java.time.ZoneOffset.systemDefault().rules.getOffset(java.time.Instant.now())) * 1000

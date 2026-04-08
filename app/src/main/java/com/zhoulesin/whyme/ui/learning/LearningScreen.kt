@@ -45,16 +45,14 @@ fun LearningScreen(
         LearningOptions(
             newWordsCount = uiState.wordsToLearn.size,
             reviewCount = uiState.wordsForReview.size,
+            quizCount = uiState.allLearnedWords.size,
             onStartLearning = {
-                viewModel.startLearning()
                 onNavigateToLearningSession(LearningModeType.LEARN)
             },
             onStartReview = {
-                viewModel.startReview()
                 onNavigateToLearningSession(LearningModeType.REVIEW)
             },
             onStartQuiz = {
-                viewModel.startQuiz()
                 onNavigateToLearningSession(LearningModeType.QUIZ)
             },
             onAddSampleData = { viewModel.addSampleWords() }
@@ -66,6 +64,7 @@ fun LearningScreen(
 private fun LearningOptions(
     newWordsCount: Int,
     reviewCount: Int,
+    quizCount: Int,
     onStartLearning: () -> Unit,
     onStartReview: () -> Unit,
     onStartQuiz: () -> Unit,
@@ -99,7 +98,7 @@ private fun LearningOptions(
     // 新词学习卡片
     LearningOptionCard(
         title = "📖 学习新词",
-        subtitle = "今日可学习 $newWordsCount 个新词",
+        subtitle = "当前级别生成 $newWordsCount 个学习单词",
         buttonText = "开始学习",
         enabled = newWordsCount > 0,
         onClick = onStartLearning
@@ -121,9 +120,9 @@ private fun LearningOptions(
     // 测试卡片
     LearningOptionCard(
         title = "✍️ 单词测试",
-        subtitle = "检验学习成果",
+        subtitle = "从已学习单词中测试 $quizCount 个词",
         buttonText = "开始测试",
-        enabled = newWordsCount + reviewCount > 0,
+        enabled = quizCount > 0,
         onClick = onStartQuiz
     )
 }

@@ -11,6 +11,7 @@ import com.zhoulesin.whyme.domain.model.WordLevel
 import com.zhoulesin.whyme.domain.usecase.GetTodayRecordUseCase
 import com.zhoulesin.whyme.domain.usecase.GetUserStatsUseCase
 import com.zhoulesin.whyme.domain.usecase.GetDailyGoalUseCase
+import com.zhoulesin.whyme.domain.usecase.GetWordsForLearningUseCase
 import com.zhoulesin.whyme.domain.usecase.GetWordsForReviewUseCase
 import com.zhoulesin.whyme.domain.repository.WordBankRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -33,6 +34,7 @@ data class HomeUiState(
     val dailyGoal: DailyGoal = DailyGoal(),
     val todayRecord: LearningRecord? = null,
     val wordsForReview: List<Word> = emptyList(),
+    val newWordsCount: Int = 0,
     val dailySentence: String = "Practice makes perfect! 熟能生巧！",
     val isLoading: Boolean = true,
     val wordDatabaseReady: Boolean = false,
@@ -45,6 +47,7 @@ class HomeViewModel @Inject constructor(
     private val getUserStatsUseCase: GetUserStatsUseCase,
     private val getDailyGoalUseCase: GetDailyGoalUseCase,
     private val getTodayRecordUseCase: GetTodayRecordUseCase,
+    private val getWordsForLearningUseCase: GetWordsForLearningUseCase,
     private val getWordsForReviewUseCase: GetWordsForReviewUseCase,
     private val wordBankRepository: WordBankRepository,
     private val appInitializer: AppInitializer
@@ -61,17 +64,24 @@ class HomeViewModel @Inject constructor(
 
     private fun loadData() {
         viewModelScope.launch {
-            // 先获取当前级别
-            wordBankRepository.getCurrentLevel().collect { currentLevel ->
-                _uiState.update { it.copy(currentLevel = currentLevel) }
-                
-                // 获取该级别的复习单词
-                getWordsForReviewUseCase(level = currentLevel).collect { reviewWords ->
-                    _uiState.update { it.copy(wordsForReview = reviewWords) }
+            wordBankRepository.getCurrentLevel().flatMapLatest { currentLevel ->
+                combine(
+                    getWordsForReviewUseCase(),
+                    getWordsForLearningUseCase(level = currentLevel)
+                ) { reviewWords, learningWords ->
+                    Triple(currentLevel, reviewWords, learningWords)
+                }
+            }.collect { (currentLevel, reviewWords, learningWords) ->
+                _uiState.update {
+                    it.copy(
+                        currentLevel = currentLevel,
+                        wordsForReview = reviewWords,
+                        newWordsCount = learningWords.size
+                    )
                 }
             }
         }
-        
+
         viewModelScope.launch {
             combine(
                 getUserStatsUseCase(),

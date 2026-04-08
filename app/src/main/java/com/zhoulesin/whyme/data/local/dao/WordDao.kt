@@ -38,18 +38,16 @@ interface WordDao {
     fun getWordsForReview(today: Long, limit: Int, level: String? = null): Flow<List<WordEntity>>
 
     /**
-     * 获取新词（未学习过的单词）
-     * @param limit 限制数量
-     * @param level 词库级别（可选）
+     * 获取学习页单词组。
+     * 学习模式只按当前级别生成单词，不过滤是否已学习。
      */
     @Query("""
         SELECT * FROM words
-        WHERE isNew = 1
-        AND (:level IS NULL OR level = :level)
+        WHERE (:level IS NULL OR level = :level)
         ORDER BY RANDOM()
         LIMIT :limit
     """)
-    fun getNewWords(limit: Int, level: String? = null): Flow<List<WordEntity>>
+    fun getLearningWords(limit: Int, level: String? = null): Flow<List<WordEntity>>
 
     /**
      * 获取今日已学习的单词

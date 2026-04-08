@@ -91,41 +91,31 @@ class LearningViewModel @Inject constructor(
     private var currentLevel: WordLevel? = null
 
     init {
-        loadCurrentLevel()
+        observeWordPools()
         loadStats()
     }
 
-    private fun loadCurrentLevel() {
+    private fun observeWordPools() {
         viewModelScope.launch {
-            wordBankRepository.getCurrentLevel().collect { level ->
-                currentLevel = level
-                loadWords(level)
-            }
-        }
-    }
-
-    private fun loadWords(level: WordLevel? = null) {
-        viewModelScope.launch {
-            // 订阅数据变化
             combine(
-                getWordsForLearningUseCase(level = level),
-                getWordsForReviewUseCase(level = level),
-                getFavoriteWordsUseCase(level = level),
+                wordBankRepository.getCurrentLevel(),
+                wordBankRepository.getCurrentLevel().flatMapLatest { level ->
+                    getWordsForLearningUseCase(level = level)
+                },
+                getWordsForReviewUseCase(),
+                getFavoriteWordsUseCase(),
                 wordRepository.getAllWords()
-            ) { toLearn, toReview, favorites, all ->
-                // 过滤已学习的单词用于测试（按级别筛选）
-                val filteredAll = if (level != null) {
-                    all.filter { it.level == level }
-                } else all
-                val learnedWords = filteredAll.filter { it.isLearned || it.reviewCount > 0 }
-                Quad(toLearn, toReview, favorites, learnedWords)
-            }.collect { (toLearn, toReview, favorites, learnedWords) ->
+            ) { level, toLearn, toReview, favorites, allWords ->
+                val allLearnedWords = allWords.filter { it.isLearned || it.reviewCount > 0 }
+                Quint(level, toLearn, toReview, favorites, allLearnedWords)
+            }.collect { (level, toLearn, toReview, favorites, allLearnedWords) ->
+                currentLevel = level
                 _uiState.update { state ->
                     state.copy(
                         wordsToLearn = toLearn,
                         wordsForReview = toReview,
                         favoriteWords = favorites,
-                        allLearnedWords = learnedWords,
+                        allLearnedWords = allLearnedWords,
                         isDataLoaded = true
                     )
                 }
@@ -148,8 +138,7 @@ class LearningViewModel @Inject constructor(
      * 初始化学习会话（进入会话页面时调用）
      */
     fun initSession() {
-        // 刷新单词数据
-        loadWords()
+        // 单词池在 init 中持续订阅，这里只保留会话入口语义。
     }
 
     /**
@@ -287,7 +276,7 @@ class LearningViewModel @Inject constructor(
             QuizSource.TODAY_LEARNED -> _uiState.value.allLearnedWords
             QuizSource.ALL_LEARNED -> _uiState.value.allLearnedWords
             QuizSource.FAVORITES -> _uiState.value.favoriteWords
-            QuizSource.ALL -> _uiState.value.wordsToLearn + _uiState.value.allLearnedWords
+            QuizSource.ALL -> _uiState.value.allLearnedWords
         }.shuffled().take(config.questionCount)
 
         if (quizWordPool.isNotEmpty()) {
@@ -315,8 +304,7 @@ class LearningViewModel @Inject constructor(
      */
     private fun generateQuizOptions(word: Word, questionType: QuestionType): List<QuizOption> {
         // 从所有单词中获取干扰选项
-        val allTranslations = _uiState.value.wordsToLearn
-            .plus(_uiState.value.allLearnedWords)
+        val allTranslations = _uiState.value.allLearnedWords
             .map { it.translation }
             .filter { it != word.translation }
             .distinct()
@@ -467,7 +455,6 @@ class LearningViewModel @Inject constructor(
 
     fun resetLearning() {
         _uiState.update { it.copy(learningState = LearningState.Idle, isFlipped = false) }
-        loadWords()
     }
 
     /**
@@ -481,66 +468,79 @@ class LearningViewModel @Inject constructor(
                     phonetic = "/həˈloʊ/",
                     definition = "used as a greeting when meeting someone",
                     example = "Hello, how are you?",
-                    translation = "你好"
+                    translation = "你好",
+                    level = currentLevel ?: WordLevel.DEFAULT
                 ),
                 Word(
                     word = "Beautiful",
                     phonetic = "/ˈbjuːtɪfəl/",
                     definition = "pleasing the senses aesthetically",
                     example = "What a beautiful day!",
-                    translation = "美丽的，美好的"
+                    translation = "美丽的，美好的",
+                    level = currentLevel ?: WordLevel.DEFAULT
                 ),
                 Word(
                     word = "Knowledge",
                     phonetic = "/ˈnɑːlɪdʒ/",
                     definition = "facts, information, and skills acquired through experience or education",
                     example = "Knowledge is power.",
-                    translation = "知识，学识"
+                    translation = "知识，学识",
+                    level = currentLevel ?: WordLevel.DEFAULT
                 ),
                 Word(
                     word = "Journey",
                     phonetic = "/ˈdʒɜːrni/",
                     definition = "an act of traveling from one place to another",
                     example = "Life is a journey, not a destination.",
-                    translation = "旅程，旅途"
+                    translation = "旅程，旅途",
+                    level = currentLevel ?: WordLevel.DEFAULT
                 ),
                 Word(
                     word = "Challenge",
                     phonetic = "/ˈtʃælɪndʒ/",
                     definition = "a task or situation that tests someone's abilities",
                     example = "I love a good challenge.",
-                    translation = "挑战，考验"
+                    translation = "挑战，考验",
+                    level = currentLevel ?: WordLevel.DEFAULT
                 ),
                 Word(
                     word = "Perseverance",
                     phonetic = "/ˌpɜːrsəˈvɪrəns/",
                     definition = "persistence in doing something despite difficulty",
                     example = "Success comes to those who have perseverance.",
-                    translation = "坚持不懈，毅力"
+                    translation = "坚持不懈，毅力",
+                    level = currentLevel ?: WordLevel.DEFAULT
                 ),
                 Word(
                     word = "Innovation",
                     phonetic = "/ˌɪnəˈveɪʃən/",
                     definition = "a new method, idea, or product",
                     example = "Innovation is the key to progress.",
-                    translation = "创新，改革"
+                    translation = "创新，改革",
+                    level = currentLevel ?: WordLevel.DEFAULT
                 ),
                 Word(
                     word = "Serendipity",
                     phonetic = "/ˌserənˈdɪpəti/",
                     definition = "the occurrence of events by chance in a happy way",
                     example = "Finding this book was pure serendipity.",
-                    translation = "意外发现美好的运气"
+                    translation = "意外发现美好的运气",
+                    level = currentLevel ?: WordLevel.DEFAULT
                 )
             )
             wordRepository.insertWords(sampleWords)
-            loadWords()
             loadStats()
         }
     }
 }
 
 /**
- * 四元组
+ * 五元组
  */
-data class Quad<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
+data class Quint<A, B, C, D, E>(
+    val first: A,
+    val second: B,
+    val third: C,
+    val fourth: D,
+    val fifth: E
+)
