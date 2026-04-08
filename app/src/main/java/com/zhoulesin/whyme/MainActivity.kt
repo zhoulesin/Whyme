@@ -78,13 +78,13 @@ fun MainApp() {
                                 Icon(
                                     imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
                                     contentDescription = item.title,
-                                    tint = if (selected) AccentViolet else SecondaryText
+                                    tint = if (selected) PrimaryText else SecondaryText
                                 )
                             },
                             label = {
                                 Text(
                                     item.title,
-                                    color = if (selected) AccentViolet else SecondaryText
+                                    color = if (selected) PrimaryText else SecondaryText
                                 )
                             }
                         )

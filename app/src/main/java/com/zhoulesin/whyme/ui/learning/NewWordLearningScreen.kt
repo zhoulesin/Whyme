@@ -56,39 +56,53 @@ fun NewWordLearningScreen(
     if (showExitDialog) {
         AlertDialog(
             onDismissRequest = { showExitDialog = false },
-            title = { Text("确认退出？") },
-            text = { Text("退出后当前学习进度将不会保存") },
+            title = { Text("确认退出？", color = PrimaryText) },
+            text = { Text("退出后当前学习进度将不会保存", color = TertiaryText) },
             confirmButton = {
                 TextButton(
                     onClick = {
                         viewModel.exitSession()
                         showExitDialog = false
                         onNavigateBack()
-                    }
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = AccentViolet
+                    )
                 ) {
                     Text("确认退出")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showExitDialog = false }) {
+                TextButton(
+                    onClick = { showExitDialog = false },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = TertiaryText
+                    )
+                ) {
                     Text("继续学习")
                 }
-            }
+            },
+            containerColor = Level3Surface
         )
     }
 
     Scaffold(
+        containerColor = MarketingBlack,
         topBar = {
             TopAppBar(
-                title = { Text("学习新词") },
+                title = { Text("学习新词", color = PrimaryText) },
                 navigationIcon = {
                     IconButton(onClick = { showExitDialog = true }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "退出学习"
+                            contentDescription = "退出学习",
+                            tint = TertiaryText
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Level3Surface
+                )
             )
         }
     ) {

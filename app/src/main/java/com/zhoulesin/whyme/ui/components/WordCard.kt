@@ -139,18 +139,20 @@ private fun WordFrontContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         // 发音按钮
-        Button(
+        IconButton(
             onClick = onSpeakClick,
-            modifier = Modifier.size(48.dp),
-            shape = RoundedCornerShape(50),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = BrandIndigo,
-                contentColor = PrimaryText
-            )
+            modifier = Modifier
+                .size(48.dp)
+                .background(
+                    color = BrandIndigo,
+                    shape = RoundedCornerShape(50)
+                )
         ) {
             Icon(
                 imageVector = Icons.Default.VolumeUp,
-                contentDescription = "发音"
+                contentDescription = "发音",
+                tint = PrimaryText,
+                modifier = Modifier.size(24.dp)
             )
         }
 

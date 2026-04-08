@@ -38,17 +38,22 @@ fun StatisticsScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
+        containerColor = MarketingBlack,
         topBar = {
             TopAppBar(
-                title = { Text("学习统计") },
+                title = { Text("学习统计", color = PrimaryText) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "返回"
+                            contentDescription = "返回",
+                            tint = TertiaryText
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Level3Surface
+                )
             )
         }
     ) { paddingValues ->

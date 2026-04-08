@@ -19,6 +19,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zhoulesin.whyme.domain.model.LearningState
 import com.zhoulesin.whyme.domain.model.ReviewResult
 import com.zhoulesin.whyme.ui.components.MasteryButtons
+import com.zhoulesin.whyme.ui.components.WordCard
+import com.zhoulesin.whyme.ui.theme.AccentViolet
+import com.zhoulesin.whyme.ui.theme.Level3Surface
+import com.zhoulesin.whyme.ui.theme.MarketingBlack
+import com.zhoulesin.whyme.ui.theme.PrimaryText
+import com.zhoulesin.whyme.ui.theme.TertiaryText
 
 /**
  * 学习会话页面 - 实际的学习/测试界面（二级页面）
@@ -77,24 +83,33 @@ fun LearningSessionScreen(
     if (showExitDialog) {
         AlertDialog(
             onDismissRequest = { showExitDialog = false },
-            title = { Text("确认退出？") },
-            text = { Text("退出后当前学习进度将不会保存") },
+            title = { Text("确认退出？", color = PrimaryText) },
+            text = { Text("退出后当前学习进度将不会保存", color = TertiaryText) },
             confirmButton = {
                 TextButton(
                     onClick = {
                         viewModel.exitSession()
                         showExitDialog = false
                         onNavigateBack()
-                    }
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = AccentViolet
+                    )
                 ) {
                     Text("确认退出")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showExitDialog = false }) {
+                TextButton(
+                    onClick = { showExitDialog = false },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = TertiaryText
+                    )
+                ) {
                     Text("继续学习")
                 }
-            }
+            },
+            containerColor = Level3Surface
         )
     }
 
@@ -121,17 +136,22 @@ fun LearningSessionScreen(
     }
 
     Scaffold(
+        containerColor = MarketingBlack,
         topBar = {
             TopAppBar(
-                title = { Text(title) },
+                title = { Text(title, color = PrimaryText) },
                 navigationIcon = {
                     IconButton(onClick = { showExitDialog = true }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "退出学习"
+                            contentDescription = "退出学习",
+                            tint = TertiaryText
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Level3Surface
+                )
             )
         }
     ) { paddingValues ->
@@ -290,7 +310,7 @@ private fun LearningContent(
         Spacer(modifier = Modifier.height(24.dp))
 
         // 单词卡片
-        com.zhoulesin.whyme.ui.components.WordCard(
+        WordCard(
             word = state.currentWord,
             isFlipped = isFlipped,
             onFlip = onFlip,
