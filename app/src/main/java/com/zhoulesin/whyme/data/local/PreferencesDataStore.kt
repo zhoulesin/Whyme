@@ -28,6 +28,7 @@ class PreferencesDataStore @Inject constructor(
         val LONGEST_STREAK = intPreferencesKey("longest_streak")
         val LAST_LEARNING_DATE = longPreferencesKey("last_learning_date")
         val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
+        val WORD_DATABASE_INITIALIZED = booleanPreferencesKey("word_database_initialized")
     }
 
     val dailyGoal: Flow<DailyGoal> = context.dataStore.data.map { preferences ->
@@ -69,6 +70,22 @@ class PreferencesDataStore @Inject constructor(
     suspend fun setOnboardingCompleted() {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.ONBOARDING_COMPLETED] = true
+        }
+    }
+
+    /**
+     * 检查词库是否已初始化
+     */
+    val isWordDatabaseInitialized: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.WORD_DATABASE_INITIALIZED] ?: false
+    }
+
+    /**
+     * 标记词库已初始化
+     */
+    suspend fun setWordDatabaseInitialized() {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.WORD_DATABASE_INITIALIZED] = true
         }
     }
 }

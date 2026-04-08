@@ -2,7 +2,10 @@ package com.zhoulesin.whyme.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.zhoulesin.whyme.data.local.AppDatabase
+import com.zhoulesin.whyme.data.local.DatabaseInitializer
 import com.zhoulesin.whyme.data.local.dao.LearningRecordDao
 import com.zhoulesin.whyme.data.local.dao.WordDao
 import dagger.Module
@@ -10,6 +13,11 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import javax.inject.Provider
 import javax.inject.Singleton
 
 /**
@@ -22,13 +30,27 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideAppDatabase(
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
+        wordDaoProvider: Provider<WordDao>
     ): AppDatabase {
         return Room.databaseBuilder(
             context,
             AppDatabase::class.java,
             AppDatabase.DATABASE_NAME
-        ).build()
+        )
+            .addCallback(object : RoomDatabase.Callback() {
+                override fun onCreate(db: SupportSQLiteDatabase) {
+                    super.onCreate(db)
+                    // 数据库首次创建时初始化词库
+                    CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+                        val initializer = DatabaseInitializer(context)
+                        val wordDao = wordDaoProvider.get()
+                        initializer.initializeWordDatabase(wordDao)
+                    }
+                }
+            })
+            .fallbackToDestructiveMigration()
+            .build()
     }
 
     @Provides

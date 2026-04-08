@@ -2,6 +2,7 @@ package com.zhoulesin.whyme.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.zhoulesin.whyme.data.local.AppInitializer
 import com.zhoulesin.whyme.domain.model.DailyGoal
 import com.zhoulesin.whyme.domain.model.LearningRecord
 import com.zhoulesin.whyme.domain.model.UserStats
@@ -29,7 +30,8 @@ data class HomeUiState(
     val todayRecord: LearningRecord? = null,
     val wordsForReview: List<Word> = emptyList(),
     val dailySentence: String = "Practice makes perfect! 熟能生巧！",
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val wordDatabaseReady: Boolean = false
 )
 
 @HiltViewModel
@@ -37,8 +39,14 @@ class HomeViewModel @Inject constructor(
     private val getUserStatsUseCase: GetUserStatsUseCase,
     private val getDailyGoalUseCase: GetDailyGoalUseCase,
     private val getTodayRecordUseCase: GetTodayRecordUseCase,
-    private val getWordsForReviewUseCase: GetWordsForReviewUseCase
+    private val getWordsForReviewUseCase: GetWordsForReviewUseCase,
+    private val appInitializer: AppInitializer
 ) : ViewModel() {
+
+    init {
+        // 应用启动时初始化词库
+        appInitializer.initializeIfNeeded()
+    }
 
     val uiState: StateFlow<HomeUiState> = combine(
         getUserStatsUseCase(),
@@ -51,7 +59,8 @@ class HomeViewModel @Inject constructor(
             dailyGoal = goal,
             todayRecord = record,
             wordsForReview = reviewWords,
-            isLoading = false
+            isLoading = false,
+            wordDatabaseReady = true
         )
     }.stateIn(
         scope = viewModelScope,

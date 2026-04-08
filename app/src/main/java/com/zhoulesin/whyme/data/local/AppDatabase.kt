@@ -15,7 +15,7 @@ import com.zhoulesin.whyme.data.local.entity.WordEntity
         WordEntity::class,
         LearningRecordEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
