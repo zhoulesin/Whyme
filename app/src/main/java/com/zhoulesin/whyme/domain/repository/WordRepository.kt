@@ -86,9 +86,10 @@ interface WordRepository {
     )
 
     /**
-     * 切换收藏状态
+     * 切换单词收藏状态
+     * @return true 表示已收藏，false 表示已取消收藏
      */
-    suspend fun toggleFavorite(wordId: Long)
+    suspend fun toggleFavorite(wordId: Long): Boolean
 
     /**
      * 获取单词总数
@@ -134,4 +135,9 @@ interface WordRepository {
      * 获取已学习但未掌握的单词（需要继续复习）
      */
     fun getWordsNeedingReview(): Flow<List<Word>>
+
+    /**
+     * 获取所有已学习的单词
+     */
+    fun getAllLearnedWords(): Flow<List<Word>>
 }

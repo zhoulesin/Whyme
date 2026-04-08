@@ -294,7 +294,7 @@ private fun LearningContent(
             word = state.currentWord,
             isFlipped = isFlipped,
             onFlip = onFlip,
-            onFavoriteClick = { onToggleFavorite(state.currentWord.id) },
+            onFavoriteClick = onToggleFavorite,
             onSpeakClick = { /* TODO: TTS */ }
         )
 

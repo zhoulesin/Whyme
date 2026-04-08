@@ -201,8 +201,8 @@ class WordRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun toggleFavorite(wordId: Long) {
-        favoriteDao.toggleFavorite(wordId)
+    override suspend fun toggleFavorite(wordId: Long): Boolean {
+        return favoriteDao.toggleFavorite(wordId)
     }
 
     override suspend fun getWordCount(): Int =
@@ -247,6 +247,18 @@ class WordRepositoryImpl @Inject constructor(
                             entity.toDomain(progress, isFavorite)
                         }
                     }
+            }
+    }
+
+    override fun getAllLearnedWords(): Flow<List<Word>> {
+        // 获取所有已学习的单词
+        return userWordProgressDao.getLearnedWords()
+            .map { wordEntities ->
+                wordEntities.mapNotNull { wordEntity ->
+                    val progress = userWordProgressDao.getProgressByWordId(wordEntity.id)
+                    val isFavorite = favoriteDao.isFavorite(wordEntity.id)
+                    wordEntity.toDomain(progress, isFavorite)
+                }
             }
     }
 }

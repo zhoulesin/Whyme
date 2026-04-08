@@ -32,7 +32,7 @@ fun WordCard(
     word: Word,
     isFlipped: Boolean,
     onFlip: () -> Unit,
-    onFavoriteClick: () -> Unit,
+    onFavoriteClick: (Long) -> Unit,
     onSpeakClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -92,7 +92,7 @@ fun WordCard(
 @Composable
 private fun WordFrontContent(
     word: Word,
-    onFavoriteClick: () -> Unit,
+    onFavoriteClick: (Long) -> Unit,
     onSpeakClick: () -> Unit
 ) {
     Column(
@@ -106,7 +106,7 @@ private fun WordFrontContent(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End
         ) {
-            IconButton(onClick = onFavoriteClick) {
+            IconButton(onClick = { onFavoriteClick(word.id) }) {
                 Icon(
                     imageVector = if (word.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                     contentDescription = "收藏",

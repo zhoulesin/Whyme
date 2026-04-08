@@ -11,8 +11,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.zhoulesin.whyme.ui.home.HomeScreen
 import com.zhoulesin.whyme.ui.learning.LearningScreen
-import com.zhoulesin.whyme.ui.learning.ReviewSessionScreen
-import com.zhoulesin.whyme.ui.learning.StudySessionScreen
+import com.zhoulesin.whyme.ui.learning.NewWordLearningScreen
+import com.zhoulesin.whyme.ui.learning.ReviewScreen
 import com.zhoulesin.whyme.ui.learning.WordDetailScreen
 import com.zhoulesin.whyme.ui.learning.QuizScreen
 import com.zhoulesin.whyme.ui.profile.ProfileScreen
@@ -62,7 +62,7 @@ fun AppNavHost(
         }
 
         composable(Screen.LearningStudy.route) {
-            StudySessionScreen(
+            NewWordLearningScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 },
@@ -73,7 +73,7 @@ fun AppNavHost(
         }
 
         composable(Screen.LearningReview.route) {
-            ReviewSessionScreen(
+            ReviewScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 },

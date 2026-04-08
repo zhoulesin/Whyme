@@ -84,8 +84,8 @@ class UpdateWordReviewUseCase @Inject constructor(
 class ToggleFavoriteUseCase @Inject constructor(
     private val wordRepository: WordRepository
 ) {
-    suspend operator fun invoke(wordId: Long) {
-        wordRepository.toggleFavorite(wordId)
+    suspend operator fun invoke(wordId: Long): Boolean {
+        return wordRepository.toggleFavorite(wordId)
     }
 }
 

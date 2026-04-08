@@ -39,7 +39,8 @@ data class LearningUiState(
     val unknownCount: Int = 0,
     
     // 数据加载状态
-    val isDataLoaded: Boolean = false
+    val isDataLoaded: Boolean = false,
+    val currentLevel: WordLevel? = null
 )
 
 /**
@@ -405,29 +406,38 @@ class LearningViewModel @Inject constructor(
 
     fun toggleFavorite(wordId: Long) {
         viewModelScope.launch {
-            // 先获取当前单词的收藏状态
-            val currentWord = _uiState.value.wordsToLearn.find { it.id == wordId }
-                ?: _uiState.value.wordsForReview.find { it.id == wordId }
-            val willBeFavorite = !(currentWord?.isFavorite ?: false)
-
-            toggleFavoriteUseCase(wordId)
+            // 执行数据库操作并获取实际结果
+            val isFavorite = toggleFavoriteUseCase(wordId)
 
             // 手动更新 UI 状态中对应单词的收藏状态
             _uiState.update { state ->
-                val updatedWord = state.wordsToLearn.find { it.id == wordId }
-                    ?: state.wordsForReview.find { it.id == wordId }
+                // 查找要更新的单词，优先从当前学习状态中查找
+                val updatedWord = when (val currentState = state.learningState) {
+                    is LearningState.Learning -> {
+                        if (currentState.currentWord.id == wordId) {
+                            currentState.currentWord
+                        } else {
+                            state.wordsToLearn.find { it.id == wordId }
+                                ?: state.wordsForReview.find { it.id == wordId }
+                        }
+                    }
+                    else -> {
+                        state.wordsToLearn.find { it.id == wordId }
+                            ?: state.wordsForReview.find { it.id == wordId }
+                    }
+                }
 
-                val newWordWithFavorite = updatedWord?.copy(isFavorite = willBeFavorite)
+                val newWordWithFavorite = updatedWord?.copy(isFavorite = isFavorite)
 
                 state.copy(
                     wordsToLearn = state.wordsToLearn.map {
-                        if (it.id == wordId) it.copy(isFavorite = willBeFavorite) else it
+                        if (it.id == wordId) it.copy(isFavorite = isFavorite) else it
                     },
                     wordsForReview = state.wordsForReview.map {
-                        if (it.id == wordId) it.copy(isFavorite = willBeFavorite) else it
+                        if (it.id == wordId) it.copy(isFavorite = isFavorite) else it
                     },
-                    // 如果取消收藏，从 favoriteWords 中移除；如果是添加收藏，添加进去
-                    favoriteWords = if (willBeFavorite) {
+                    // 如果添加收藏，添加到收藏列表；如果取消收藏，从收藏列表移除
+                    favoriteWords = if (isFavorite) {
                         // 添加到收藏列表
                         val wordToAdd = newWordWithFavorite ?: return@update state
                         state.favoriteWords + wordToAdd

@@ -16,15 +16,23 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zhoulesin.whyme.domain.model.*
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.LaunchedEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuizScreen(
     onNavigateBack: () -> Unit,
     onQuizComplete: () -> Unit,
-    viewModel: LearningViewModel = hiltViewModel()
+    viewModel: QuizViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // 初始化测试会话
+    LaunchedEffect(Unit) {
+        viewModel.initSession()
+    }
 
     Scaffold(
         topBar = {
@@ -32,7 +40,7 @@ fun QuizScreen(
                 title = { Text("单词测试") },
                 navigationIcon = {
                     IconButton(onClick = {
-                        viewModel.resetLearning()
+                        viewModel.exitSession()
                         onNavigateBack()
                     }) {
                         Icon(
@@ -79,7 +87,7 @@ fun QuizScreen(
                         accuracy = state.accuracy,
                         onRetry = { viewModel.startQuiz() },
                         onFinish = {
-                            viewModel.resetLearning()
+                            viewModel.exitSession()
                             onQuizComplete()
                         }
                     )
