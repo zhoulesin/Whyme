@@ -11,9 +11,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.zhoulesin.whyme.ui.home.HomeScreen
 import com.zhoulesin.whyme.ui.learning.LearningScreen
+import com.zhoulesin.whyme.ui.learning.LearningSessionScreen
 import com.zhoulesin.whyme.ui.learning.WordDetailScreen
 import com.zhoulesin.whyme.ui.learning.QuizScreen
 import com.zhoulesin.whyme.ui.profile.ProfileScreen
+import com.zhoulesin.whyme.ui.favorites.FavoritesScreen
 
 /**
  * 应用导航主机
@@ -32,21 +34,42 @@ fun AppNavHost(
         composable(Screen.Home.route) {
             HomeScreen(
                 onNavigateToLearning = {
-                    navController.navigate(Screen.Learning.route)
+                    // 首页默认进入自动模式（复习优先）
+                    navController.navigate(Screen.LearningSession.createRoute("AUTO"))
                 }
             )
         }
 
+        // 学习中心入口页面（底部 tab）
         composable(Screen.Learning.route) {
             LearningScreen(
+                onNavigateToLearningSession = { mode ->
+                    navController.navigate(Screen.LearningSession.createRoute(mode.name))
+                },
                 onNavigateToWordDetail = { wordId ->
                     navController.navigate(Screen.WordDetail.createRoute(wordId))
-                },
-                onNavigateToQuiz = {
-                    navController.navigate(Screen.Quiz.route)
-                },
+                }
+            )
+        }
+
+        // 学习会话页面（二级页面）
+        composable(
+            route = Screen.LearningSession.route,
+            arguments = listOf(
+                navArgument("mode") {
+                    type = NavType.StringType
+                    defaultValue = "AUTO"
+                }
+            )
+        ) { backStackEntry ->
+            val mode = backStackEntry.arguments?.getString("mode") ?: "AUTO"
+            LearningSessionScreen(
+                mode = mode,
                 onNavigateBack = {
                     navController.popBackStack()
+                },
+                onNavigateToWordDetail = { wordId ->
+                    navController.navigate(Screen.WordDetail.createRoute(wordId))
                 }
             )
         }
@@ -81,6 +104,15 @@ fun AppNavHost(
                 },
                 onNavigateToStatistics = {
                     navController.navigate(Screen.Statistics.route)
+                }
+            )
+        }
+
+        composable(Screen.Favorites.route) {
+            FavoritesScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToWordDetail = { wordId ->
+                    navController.navigate(Screen.WordDetail.createRoute(wordId))
                 }
             )
         }

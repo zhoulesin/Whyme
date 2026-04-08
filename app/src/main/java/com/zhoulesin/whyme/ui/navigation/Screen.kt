@@ -50,6 +50,9 @@ sealed class BottomNavItem(
 sealed class Screen(val route: String) {
     data object Home : Screen("home")
     data object Learning : Screen("learning")
+    data object LearningSession : Screen("learning/session/{mode}") {
+        fun createRoute(mode: String = "auto") = "learning/session/$mode"
+    }
     data object WordDetail : Screen("word/{wordId}") {
         fun createRoute(wordId: Long) = "word/$wordId"
     }
@@ -59,4 +62,14 @@ sealed class Screen(val route: String) {
     data object Speaking : Screen("speaking")
     data object Favorites : Screen("favorites")
     data object Statistics : Screen("statistics")
+}
+
+/**
+ * 学习模式
+ */
+enum class LearningModeType {
+    AUTO,       // 自动选择（复习优先，否则学习）
+    LEARN,      // 学习新词
+    REVIEW,     // 复习
+    QUIZ        // 测试
 }

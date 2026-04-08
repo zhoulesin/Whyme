@@ -80,27 +80,42 @@ class LearningRepositoryImpl @Inject constructor(
         correctCount: Int,
         durationSeconds: Long
     ) {
-        val today = LocalDate.now()
-        val existingRecord = getRecordByDate(today)
+        try {
+            val today = LocalDate.now()
+            val existingRecord = getRecordByDate(today)
 
-        val updatedRecord = if (existingRecord != null) {
-            existingRecord.copy(
-                wordsLearned = existingRecord.wordsLearned + wordsLearned,
-                wordsReviewed = existingRecord.wordsReviewed + wordsReviewed,
-                correctCount = existingRecord.correctCount + correctCount,
-                durationSeconds = existingRecord.durationSeconds + durationSeconds
-            )
-        } else {
-            LearningRecord(
-                date = today,
-                wordsLearned = wordsLearned,
-                wordsReviewed = wordsReviewed,
-                correctCount = correctCount,
-                durationSeconds = durationSeconds
-            )
+            val updatedRecord = if (existingRecord != null) {
+                existingRecord.copy(
+                    wordsLearned = existingRecord.wordsLearned + wordsLearned,
+                    wordsReviewed = existingRecord.wordsReviewed + wordsReviewed,
+                    correctCount = existingRecord.correctCount + correctCount,
+                    durationSeconds = existingRecord.durationSeconds + durationSeconds
+                )
+            } else {
+                LearningRecord(
+                    date = today,
+                    wordsLearned = wordsLearned,
+                    wordsReviewed = wordsReviewed,
+                    correctCount = correctCount,
+                    durationSeconds = durationSeconds
+                )
+            }
+
+            saveRecord(updatedRecord)
+
+            // 更新连续打卡
+            updateStreakIfNeeded()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
+    }
 
-        saveRecord(updatedRecord)
+    private suspend fun updateStreakIfNeeded() {
+        try {
+            preferencesDataStore.checkAndUpdateStreak()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun calculateStreak(records: List<LearningRecordEntity>): Int {

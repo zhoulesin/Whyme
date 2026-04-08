@@ -4,8 +4,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,45 +12,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.zhoulesin.whyme.domain.model.LearningState
-import com.zhoulesin.whyme.domain.model.ReviewResult
-import com.zhoulesin.whyme.ui.components.MasteryButtons
-import com.zhoulesin.whyme.ui.components.WordCard
+import com.zhoulesin.whyme.ui.navigation.LearningModeType
 
+/**
+ * 学习中心入口页面（底部 tab 页面）
+ */
 @Composable
 fun LearningScreen(
+    onNavigateToLearningSession: (LearningModeType) -> Unit,
     onNavigateToWordDetail: (Long) -> Unit,
-    onNavigateToQuiz: () -> Unit,
-    onNavigateBack: () -> Unit,
     viewModel: LearningViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var showExitDialog by remember { mutableStateOf(false) }
-
-    // 退出确认对话框
-    if (showExitDialog) {
-        AlertDialog(
-            onDismissRequest = { showExitDialog = false },
-            title = { Text("确认退出？") },
-            text = { Text("退出后当前学习进度将不会保存") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.resetLearning()
-                        showExitDialog = false
-                        onNavigateBack()
-                    }
-                ) {
-                    Text("确认退出")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showExitDialog = false }) {
-                    Text("继续学习")
-                }
-            }
-        )
-    }
 
     Column(
         modifier = Modifier
@@ -61,88 +32,33 @@ fun LearningScreen(
             .padding(16.dp)
     ) {
         // 顶部栏
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "学习中心",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
-            )
+        Text(
+            text = "学习中心",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
 
-            // 非空闲状态显示退出按钮
-            if (uiState.learningState !is LearningState.Idle) {
-                IconButton(onClick = { showExitDialog = true }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "退出学习"
-                    )
-                }
-            }
-        }
+        Spacer(modifier = Modifier.height(16.dp))
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        when (val state = uiState.learningState) {
-            is LearningState.Idle -> {
-                // 空闲状态 - 显示学习选项
-                LearningOptions(
-                    newWordsCount = uiState.wordsToLearn.size,
-                    reviewCount = uiState.wordsForReview.size,
-                    onStartLearning = { viewModel.startLearning() },
-                    onStartReview = { viewModel.startReview() },
-                    onStartQuiz = onNavigateToQuiz,
-                    onAddSampleData = { viewModel.addSampleWords() }
-                )
-            }
-
-            is LearningState.Learning -> {
-                // 学习状态 - 显示单词卡片
-                LearningContent(
-                    state = state,
-                    isFlipped = uiState.isFlipped,
-                    onFlip = { viewModel.flipCard() },
-                    onMarkWord = { result -> viewModel.markWord(result) },
-                    onToggleFavorite = { viewModel.toggleFavorite(state.currentWord.id) }
-                )
-            }
-
-            is LearningState.Completed -> {
-                // 完成状态
-                LearningCompletedContent(
-                    learned = state.learned,
-                    reviewed = state.reviewed,
-                    accuracy = state.accuracy,
-                    onContinue = { viewModel.resetLearning() },
-                    onGoHome = onNavigateBack
-                )
-            }
-
-            is LearningState.Testing -> {
-                // 测试状态 - 使用 QuizScreen
-            }
-
-            is LearningState.QuizResult -> {
-                // 测试结果状态
-                LearningCompletedContent(
-                    learned = state.correctCount,
-                    reviewed = state.totalCount - state.correctCount,
-                    accuracy = state.accuracy,
-                    onContinue = { viewModel.resetLearning() },
-                    onGoHome = onNavigateBack
-                )
-            }
-
-            is LearningState.Error -> {
-                // 错误状态
-                Text(
-                    text = state.message,
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
-        }
+        // 学习选项
+        LearningOptions(
+            newWordsCount = uiState.wordsToLearn.size,
+            reviewCount = uiState.wordsForReview.size,
+            onStartLearning = {
+                viewModel.startLearning()
+                onNavigateToLearningSession(LearningModeType.LEARN)
+            },
+            onStartReview = {
+                viewModel.startReview()
+                onNavigateToLearningSession(LearningModeType.REVIEW)
+            },
+            onStartQuiz = {
+                viewModel.startQuiz()
+                onNavigateToLearningSession(LearningModeType.QUIZ)
+            },
+            onAddSampleData = { viewModel.addSampleWords() }
+        )
     }
 }
 
@@ -253,163 +169,6 @@ private fun LearningOptionCard(
                     text = buttonText,
                     style = MaterialTheme.typography.titleMedium
                 )
-            }
-        }
-    }
-}
-
-@Composable
-private fun LearningContent(
-    state: LearningState.Learning,
-    isFlipped: Boolean,
-    onFlip: () -> Unit,
-    onMarkWord: (ReviewResult) -> Unit,
-    onToggleFavorite: () -> Unit
-) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // 进度指示器
-        LinearProgressIndicator(
-            progress = { (state.index + 1).toFloat() / state.total },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-        )
-
-        Text(
-            text = "${state.index + 1} / ${state.total}",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // 单词卡片
-        WordCard(
-            word = state.currentWord,
-            isFlipped = isFlipped,
-            onFlip = onFlip,
-            onFavoriteClick = onToggleFavorite,
-            onSpeakClick = { /* TODO: TTS */ }
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // 记忆按钮（卡片翻转后才显示）
-        if (isFlipped) {
-            Text(
-                text = "你觉得这个单词记得怎么样？",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-
-            MasteryButtons(
-                onAgain = { onMarkWord(ReviewResult.AGAIN) },
-                onHard = { onMarkWord(ReviewResult.HARD) },
-                onGood = { onMarkWord(ReviewResult.GOOD) },
-                onEasy = { onMarkWord(ReviewResult.EASY) }
-            )
-        } else {
-            Text(
-                text = "点击卡片查看释义",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
-private fun LearningCompletedContent(
-    learned: Int,
-    reviewed: Int,
-    accuracy: Float,
-    onContinue: () -> Unit,
-    onGoHome: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "🎉",
-                style = MaterialTheme.typography.displayLarge
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "太棒了！",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
-            )
-
-            Text(
-                text = "今日学习完成",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "$learned",
-                        style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text("新学", style = MaterialTheme.typography.bodySmall)
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "$reviewed",
-                        style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text("复习", style = MaterialTheme.typography.bodySmall)
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "${(accuracy * 100).toInt()}%",
-                        style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text("正确率", style = MaterialTheme.typography.bodySmall)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Button(
-                onClick = onContinue,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("继续学习")
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OutlinedButton(
-                onClick = onGoHome,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("返回首页")
             }
         }
     }

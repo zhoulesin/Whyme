@@ -42,6 +42,9 @@ class ProfileViewModel @Inject constructor(
     private val wordRepository: WordRepository
 ) : ViewModel() {
 
+    private val _masteredWords = MutableStateFlow(0)
+    val masteredWords: StateFlow<Int> = _masteredWords.asStateFlow()
+
     val uiState: StateFlow<ProfileUiState> = combine(
         getUserStatsUseCase(),
         getDailyGoalUseCase()
@@ -49,6 +52,7 @@ class ProfileViewModel @Inject constructor(
         ProfileUiState(
             userStats = stats,
             dailyGoal = goal,
+            masteredWords = _masteredWords.value,
             isLoading = false
         )
     }.stateIn(
@@ -57,8 +61,14 @@ class ProfileViewModel @Inject constructor(
         initialValue = ProfileUiState()
     )
 
-    suspend fun loadWordCounts(): Pair<Int, Int> {
-        return Pair(wordRepository.getWordCount(), wordRepository.getMasteredWordCount())
+    init {
+        loadWordCounts()
+    }
+
+    private fun loadWordCounts() {
+        viewModelScope.launch {
+            _masteredWords.value = wordRepository.getMasteredWordCount()
+        }
     }
 
     fun updateDailyGoal(goal: DailyGoal) {

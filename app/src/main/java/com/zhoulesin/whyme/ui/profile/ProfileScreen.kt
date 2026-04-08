@@ -30,14 +30,6 @@ fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var totalWords by remember { mutableIntStateOf(0) }
-    var masteredWords by remember { mutableIntStateOf(0) }
-
-    LaunchedEffect(Unit) {
-        val counts = viewModel.loadWordCounts()
-        totalWords = counts.first
-        masteredWords = counts.second
-    }
 
     Column(
         modifier = Modifier
@@ -52,8 +44,8 @@ fun ProfileScreen(
 
         // 学习数据卡片
         LearningDataCard(
-            totalWords = totalWords,
-            masteredWords = masteredWords,
+            totalWords = uiState.userStats.totalWordsLearned + uiState.userStats.totalWordsReviewed,
+            masteredWords = uiState.masteredWords,
             streak = uiState.userStats.currentStreak,
             totalMinutes = uiState.userStats.totalLearningMinutes
         )

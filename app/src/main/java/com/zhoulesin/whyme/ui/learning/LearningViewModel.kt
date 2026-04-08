@@ -72,6 +72,7 @@ class LearningViewModel @Inject constructor(
     private val getFavoriteWordsUseCase: GetFavoriteWordsUseCase,
     private val updateWordReviewUseCase: UpdateWordReviewUseCase,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
+    private val recordLearningSessionUseCase: RecordLearningSessionUseCase,
     private val wordRepository: WordRepository
 ) : ViewModel() {
 
@@ -116,6 +117,31 @@ class LearningViewModel @Inject constructor(
             val learning = wordRepository.getLearningWordCount()
             val unknown = wordRepository.getUnknownWordCount()
             _uiState.update { it.copy(masteredCount = mastered, learningCount = learning, unknownCount = unknown) }
+        }
+    }
+
+    // ==================== 会话管理 ====================
+
+    /**
+     * 初始化学习会话（进入会话页面时调用）
+     */
+    fun initSession() {
+        // 刷新单词数据
+        loadWords()
+    }
+
+    /**
+     * 退出学习会话（返回入口页面时调用）
+     */
+    fun exitSession() {
+        _uiState.update { state ->
+            state.copy(
+                learningState = LearningState.Idle,
+                isFlipped = false,
+                sessionStats = SessionStats(),
+                selectedAnswer = null,
+                isAnswerRevealed = false
+            )
         }
     }
 
@@ -167,9 +193,12 @@ class LearningViewModel @Inject constructor(
             if (currentState is LearningState.Learning) {
                 updateWordReviewUseCase(currentState.currentWord.id, result)
 
+                val isNewWord = currentState.mode == LearningMode.NEW_WORD
+
                 _uiState.update { state ->
                     val newStats = state.sessionStats.copy(
                         wordsReviewed = state.sessionStats.wordsReviewed + 1,
+                        wordsLearned = if (isNewWord) state.sessionStats.wordsLearned + 1 else state.sessionStats.wordsLearned,
                         correctCount = if (result == ReviewResult.GOOD || result == ReviewResult.EASY) {
                             state.sessionStats.correctCount + 1
                         } else state.sessionStats.correctCount
@@ -177,21 +206,34 @@ class LearningViewModel @Inject constructor(
 
                     val nextIndex = currentState.index + 1
                     if (nextIndex >= currentState.total) {
-                        // 学习完成
+                        // 学习完成 - 先记录会话，再更新状态
+                        val durationSeconds = (System.currentTimeMillis() - state.sessionStats.startTime) / 1000
+                        val finalStats = newStats
+
+                        // 同步记录会话
+                        kotlinx.coroutines.runBlocking {
+                            recordLearningSessionUseCase(
+                                wordsLearned = finalStats.wordsLearned,
+                                wordsReviewed = finalStats.wordsReviewed,
+                                correctCount = finalStats.correctCount,
+                                durationSeconds = durationSeconds
+                            )
+                        }
+
                         state.copy(
                             learningState = LearningState.Completed(
-                                learned = if (currentState.mode == LearningMode.NEW_WORD) newStats.wordsReviewed else 0,
-                                reviewed = newStats.wordsReviewed,
-                                accuracy = if (newStats.wordsReviewed > 0) {
-                                    newStats.correctCount.toFloat() / newStats.wordsReviewed
+                                learned = if (isNewWord) finalStats.wordsLearned else 0,
+                                reviewed = finalStats.wordsReviewed,
+                                accuracy = if (finalStats.wordsReviewed > 0) {
+                                    finalStats.correctCount.toFloat() / finalStats.wordsReviewed
                                 } else 0f
                             ),
-                            sessionStats = newStats,
+                            sessionStats = finalStats,
                             isFlipped = false
                         )
                     } else {
                         // 下一个单词
-                        val words = if (currentState.mode == LearningMode.NEW_WORD) {
+                        val words = if (isNewWord) {
                             state.wordsToLearn
                         } else {
                             state.wordsForReview
@@ -300,20 +342,34 @@ class LearningViewModel @Inject constructor(
 
             _uiState.update { state ->
                 val newStats = state.sessionStats.copy(
+                    wordsReviewed = state.sessionStats.wordsReviewed + 1,
                     correctCount = if (isCorrect) state.sessionStats.correctCount + 1 else state.sessionStats.correctCount
                 )
 
                 val nextIndex = currentState.index + 1
                 if (nextIndex >= quizWordPool.size) {
-                    // 测试完成
+                    // 测试完成 - 先记录会话
+                    val durationSeconds = (System.currentTimeMillis() - state.sessionStats.startTime) / 1000
+                    val finalStats = newStats
+
+                    // 同步记录会话
+                    kotlinx.coroutines.runBlocking {
+                        recordLearningSessionUseCase(
+                            wordsLearned = 0, // 测试不计入新词学习
+                            wordsReviewed = finalStats.wordsReviewed,
+                            correctCount = finalStats.correctCount,
+                            durationSeconds = durationSeconds
+                        )
+                    }
+
                     state.copy(
                         learningState = LearningState.QuizResult(
-                            correctCount = newStats.correctCount,
+                            correctCount = finalStats.correctCount,
                             totalCount = quizWordPool.size,
-                            accuracy = newStats.correctCount.toFloat() / quizWordPool.size,
+                            accuracy = finalStats.correctCount.toFloat() / quizWordPool.size,
                             mode = LearningMode.QUIZ
                         ),
-                        sessionStats = newStats,
+                        sessionStats = finalStats,
                         selectedAnswer = null,
                         isAnswerRevealed = false
                     )
@@ -339,7 +395,49 @@ class LearningViewModel @Inject constructor(
 
     fun toggleFavorite(wordId: Long) {
         viewModelScope.launch {
+            // 先获取当前单词的收藏状态
+            val currentWord = _uiState.value.wordsToLearn.find { it.id == wordId }
+                ?: _uiState.value.wordsForReview.find { it.id == wordId }
+            val willBeFavorite = !(currentWord?.isFavorite ?: false)
+
             toggleFavoriteUseCase(wordId)
+
+            // 手动更新 UI 状态中对应单词的收藏状态
+            _uiState.update { state ->
+                val updatedWord = state.wordsToLearn.find { it.id == wordId }
+                    ?: state.wordsForReview.find { it.id == wordId }
+
+                val newWordWithFavorite = updatedWord?.copy(isFavorite = willBeFavorite)
+
+                state.copy(
+                    wordsToLearn = state.wordsToLearn.map {
+                        if (it.id == wordId) it.copy(isFavorite = willBeFavorite) else it
+                    },
+                    wordsForReview = state.wordsForReview.map {
+                        if (it.id == wordId) it.copy(isFavorite = willBeFavorite) else it
+                    },
+                    // 如果取消收藏，从 favoriteWords 中移除；如果是添加收藏，添加进去
+                    favoriteWords = if (willBeFavorite) {
+                        // 添加到收藏列表
+                        val wordToAdd = newWordWithFavorite ?: return@update state
+                        state.favoriteWords + wordToAdd
+                    } else {
+                        // 从收藏列表移除
+                        state.favoriteWords.filter { it.id != wordId }
+                    },
+                    // 同时更新 learningState 中的 currentWord
+                    learningState = when (val currentState = state.learningState) {
+                        is LearningState.Learning -> {
+                            if (currentState.currentWord.id == wordId && newWordWithFavorite != null) {
+                                currentState.copy(currentWord = newWordWithFavorite)
+                            } else {
+                                currentState
+                            }
+                        }
+                        else -> currentState
+                    }
+                )
+            }
         }
     }
 

@@ -38,7 +38,7 @@ fun MainApp() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    // 判断是否显示底部导航
+    // 判断是否显示底部导航（二级页面不显示）
     val showBottomBar = currentDestination?.route in listOf(
         Screen.Home.route,
         Screen.Learning.route,

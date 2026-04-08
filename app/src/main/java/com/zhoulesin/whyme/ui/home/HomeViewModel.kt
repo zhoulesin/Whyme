@@ -67,4 +67,11 @@ class HomeViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = HomeUiState()
     )
+
+    /**
+     * 刷新数据（当从学习页面返回时调用）
+     */
+    fun refresh() {
+        // Flow会自动更新，但可以在这里添加一些日志或调试信息
+    }
 }
