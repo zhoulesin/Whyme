@@ -1,5 +1,7 @@
 package com.zhoulesin.whyme.ui.learning
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -19,6 +21,7 @@ import com.zhoulesin.whyme.domain.model.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.LaunchedEffect
+import com.zhoulesin.whyme.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,7 +59,8 @@ fun QuizScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp),
+                .padding(16.dp)
+                .background(MarketingBlack),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             when (val state = uiState.learningState) {
@@ -123,27 +127,28 @@ private fun QuizStartContent(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "单词测试",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
-        )
+                text = "单词测试",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight(510),
+                color = PrimaryText
+            )
 
-        Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-        Text(
-            text = "共 $wordCount 个可测试单词",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+            Text(
+                text = "共 $wordCount 个可测试单词",
+                style = MaterialTheme.typography.bodyLarge,
+                color = TertiaryText
+            )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // 测试说明
-        Card(
+        Surface(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
+            shape = RoundedCornerShape(8.dp),
+            color = Level3Surface,
+            border = BorderStroke(1.dp, BorderStandard)
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
@@ -152,13 +157,15 @@ private fun QuizStartContent(
                 Text(
                     text = "测试规则",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight(510),
+                    color = PrimaryText
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "• 从全部已学习单词中出题\n• 共 10 道选择题\n• 正确率影响后续复习安排",
                     style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Start
+                    textAlign = TextAlign.Start,
+                    color = TertiaryText
                 )
             }
         }
@@ -171,12 +178,16 @@ private fun QuizStartContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(6.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = BrandIndigo,
+                contentColor = PrimaryText
+            )
         ) {
             Text(
                 text = "开始测试",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight(510)
             )
         }
 
@@ -218,18 +229,18 @@ private fun QuizQuestionContent(
         Text(
             text = "${state.index + 1} / ${state.total}",
             style = MaterialTheme.typography.bodyMedium,
+            color = TertiaryText,
             modifier = Modifier.padding(vertical = 8.dp)
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
         // 问题卡片
-        Card(
+        Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            )
+            shape = RoundedCornerShape(8.dp),
+            color = Level3Surface,
+            border = BorderStroke(1.dp, BorderStandard)
         ) {
             Column(
                 modifier = Modifier
@@ -244,7 +255,7 @@ private fun QuizQuestionContent(
                         QuestionType.SPELLING -> "请拼写这个单词"
                     },
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    color = TertiaryText
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -256,7 +267,8 @@ private fun QuizQuestionContent(
                         QuestionType.SPELLING -> state.currentWord.translation
                     },
                     style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight(510),
+                    color = PrimaryText
                 )
 
                 if (state.questionType == QuestionType.WORD_TO_CHINESE) {
@@ -264,7 +276,7 @@ private fun QuizQuestionContent(
                     Text(
                         text = state.currentWord.phonetic,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        color = TertiaryText
                     )
                 }
             }
@@ -277,18 +289,26 @@ private fun QuizQuestionContent(
             state.options.forEach { option ->
                 val isSelected = selectedAnswer == option.text
                 val backgroundColor = when {
-                    isAnswerRevealed && option.isCorrect -> MaterialTheme.colorScheme.primaryContainer
-                    isAnswerRevealed && isSelected && !option.isCorrect -> MaterialTheme.colorScheme.errorContainer
-                    isSelected -> MaterialTheme.colorScheme.secondaryContainer
-                    else -> MaterialTheme.colorScheme.surface
+                    isAnswerRevealed && option.isCorrect -> BrandIndigo
+                    isAnswerRevealed && isSelected && !option.isCorrect -> MaterialTheme.colorScheme.error
+                    isSelected -> Level3Surface
+                    else -> Level3Surface
+                }
+                val textColor = when {
+                    isAnswerRevealed && option.isCorrect -> PrimaryText
+                    isAnswerRevealed && isSelected && !option.isCorrect -> PrimaryText
+                    isSelected -> AccentViolet
+                    else -> PrimaryText
                 }
 
-                OutlinedCard(
+                Surface(
                     onClick = { if (!isAnswerRevealed) onSelectAnswer(option.text) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 4.dp),
-                    colors = CardDefaults.outlinedCardColors(containerColor = backgroundColor)
+                    shape = RoundedCornerShape(8.dp),
+                    color = backgroundColor,
+                    border = BorderStroke(1.dp, if (isSelected) AccentViolet else BorderStandard)
                 ) {
                     Row(
                         modifier = Modifier
@@ -299,7 +319,8 @@ private fun QuizQuestionContent(
                     ) {
                         Text(
                             text = option.text,
-                            style = MaterialTheme.typography.bodyLarge
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = textColor
                         )
 
                         if (isAnswerRevealed) {
@@ -307,13 +328,13 @@ private fun QuizQuestionContent(
                                 Icon(
                                     imageVector = Icons.Default.Check,
                                     contentDescription = "正确",
-                                    tint = MaterialTheme.colorScheme.primary
+                                    tint = PrimaryText
                                 )
                             } else if (isSelected) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
                                     contentDescription = "错误",
-                                    tint = MaterialTheme.colorScheme.error
+                                    tint = PrimaryText
                                 )
                             }
                         }
@@ -331,9 +352,16 @@ private fun QuizQuestionContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(6.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = BrandIndigo,
+                    contentColor = PrimaryText
+                )
             ) {
-                Text(if (state.index + 1 >= state.total) "查看结果" else "下一题")
+                Text(
+                    text = if (state.index + 1 >= state.total) "查看结果" else "下一题",
+                    color = PrimaryText
+                )
             }
         }
     }
@@ -374,7 +402,8 @@ private fun QuizResultContent(
                 else -> "还需要多练习哦"
             },
             style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight(510),
+            color = PrimaryText
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -386,34 +415,34 @@ private fun QuizResultContent(
                 Text(
                     text = "$correctCount",
                     style = MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    fontWeight = FontWeight(590),
+                    color = BrandIndigo
                 )
-                Text("正确", style = MaterialTheme.typography.bodyMedium)
+                Text("正确", style = MaterialTheme.typography.bodyMedium, color = TertiaryText)
             }
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = "${totalCount - correctCount}",
                     style = MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight(590),
                     color = MaterialTheme.colorScheme.error
                 )
-                Text("错误", style = MaterialTheme.typography.bodyMedium)
+                Text("错误", style = MaterialTheme.typography.bodyMedium, color = TertiaryText)
             }
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = "${(accuracy * 100).toInt()}%",
                     style = MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight(590),
                     color = when {
-                        accuracy >= 0.8f -> MaterialTheme.colorScheme.primary
-                        accuracy >= 0.6f -> MaterialTheme.colorScheme.secondary
+                        accuracy >= 0.8f -> BrandIndigo
+                        accuracy >= 0.6f -> AccentViolet
                         else -> MaterialTheme.colorScheme.error
                     }
                 )
-                Text("正确率", style = MaterialTheme.typography.bodyMedium)
+                Text("正确率", style = MaterialTheme.typography.bodyMedium, color = TertiaryText)
             }
         }
 
@@ -424,9 +453,13 @@ private fun QuizResultContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(6.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = BrandIndigo,
+                contentColor = PrimaryText
+            )
         ) {
-            Text("再测一次")
+            Text("再测一次", color = PrimaryText)
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -436,7 +469,11 @@ private fun QuizResultContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(6.dp),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = AccentViolet
+            ),
+            border = BorderStroke(1.dp, AccentViolet)
         ) {
             Text("返回")
         }

@@ -1,8 +1,11 @@
 package com.zhoulesin.whyme.ui.favorites
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -16,6 +19,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zhoulesin.whyme.domain.model.Word
 import com.zhoulesin.whyme.ui.components.WordCard
+import com.zhoulesin.whyme.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,6 +49,7 @@ fun FavoritesScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .background(MarketingBlack)
         ) {
             // 搜索栏
             OutlinedTextField(
@@ -53,19 +58,24 @@ fun FavoritesScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                placeholder = { Text("搜索收藏的单词") },
+                placeholder = { Text("搜索收藏的单词", color = TertiaryText) },
                 leadingIcon = {
-                    Icon(Icons.Default.Search, contentDescription = null)
+                    Icon(Icons.Default.Search, contentDescription = null, tint = TertiaryText)
                 },
                 trailingIcon = {
                     if (uiState.searchQuery.isNotEmpty()) {
                         IconButton(onClick = { viewModel.clearSearch() }) {
-                            Icon(Icons.Default.Clear, contentDescription = "清除")
+                            Icon(Icons.Default.Clear, contentDescription = "清除", tint = TertiaryText)
                         }
                     }
                 },
                 singleLine = true,
-                shape = MaterialTheme.shapes.large
+                shape = RoundedCornerShape(8.dp),
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    focusedBorderColor = AccentViolet,
+                    unfocusedBorderColor = BorderStandard,
+                    cursorColor = AccentViolet
+                )
             )
 
             // 单词列表
@@ -82,11 +92,11 @@ fun FavoritesScreen(
                 ) {
                     item {
                         Text(
-                            text = "共 ${uiState.favoriteWords.size} 个收藏",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
+                        text = "共 ${uiState.favoriteWords.size} 个收藏",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TertiaryText,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
                     }
 
                     items(
@@ -111,9 +121,12 @@ private fun FavoriteWordItem(
     onToggleFavorite: () -> Unit,
     onClick: () -> Unit
 ) {
-    Card(
+    Surface(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        color = Level3Surface,
+        border = BorderStroke(1.dp, BorderStandard)
     ) {
         Row(
             modifier = Modifier
@@ -125,14 +138,15 @@ private fun FavoriteWordItem(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = word.word,
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.titleMedium,
+                        color = PrimaryText
                     )
                     if (word.phonetic.isNotBlank()) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = word.phonetic,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = TertiaryText
                         )
                     }
                 }
@@ -140,7 +154,7 @@ private fun FavoriteWordItem(
                 Text(
                     text = word.translation,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = TertiaryText
                 )
             }
 
@@ -171,13 +185,13 @@ private fun EmptyFavoritesContent(
                 imageVector = if (hasSearchQuery) Icons.Default.SearchOff else Icons.Default.FavoriteBorder,
                 contentDescription = null,
                 modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                tint = TertiaryText.copy(alpha = 0.5f)
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = if (hasSearchQuery) "未找到匹配的收藏" else "暂无收藏",
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = PrimaryText
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
@@ -187,7 +201,7 @@ private fun EmptyFavoritesContent(
                     "在学习过程中点击心形图标添加收藏"
                 },
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                color = TertiaryText.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center
             )
         }

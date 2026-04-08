@@ -1,5 +1,7 @@
 package com.zhoulesin.whyme.ui.learning
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zhoulesin.whyme.ui.navigation.LearningModeType
+import com.zhoulesin.whyme.ui.theme.*
 
 /**
  * 学习中心入口页面（底部 tab 页面）
@@ -30,12 +33,14 @@ fun LearningScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
+            .background(MarketingBlack)
     ) {
         // 顶部栏
         Text(
             text = "学习中心",
             style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight(510),
+            color = PrimaryText,
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
@@ -72,11 +77,11 @@ private fun LearningOptions(
 ) {
     // 添加示例数据按钮（仅用于演示）
     if (newWordsCount == 0 && reviewCount == 0) {
-        Card(
+        Surface(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer
-            )
+            shape = RoundedCornerShape(8.dp),
+            color = Level3Surface,
+            border = BorderStroke(1.dp, BorderStandard)
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
@@ -84,10 +89,17 @@ private fun LearningOptions(
             ) {
                 Text(
                     text = "还没有学习数据",
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    color = PrimaryText
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Button(onClick = onAddSampleData) {
+                Button(
+                    onClick = onAddSampleData,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = AccentViolet,
+                        contentColor = PrimaryText
+                    )
+                ) {
                     Text("添加示例单词")
                 }
             }
@@ -135,13 +147,11 @@ private fun LearningOptionCard(
     enabled: Boolean,
     onClick: () -> Unit
 ) {
-    Card(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(8.dp),
+        color = Level3Surface,
+        border = BorderStroke(1.dp, BorderStandard)
     ) {
         Column(
             modifier = Modifier.padding(20.dp)
@@ -149,20 +159,25 @@ private fun LearningOptionCard(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight(510),
+                color = PrimaryText
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = TertiaryText
             )
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = onClick,
                 enabled = enabled,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(6.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = BrandIndigo,
+                    contentColor = PrimaryText
+                )
             ) {
                 Text(
                     text = buttonText,

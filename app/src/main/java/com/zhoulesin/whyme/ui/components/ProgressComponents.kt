@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.zhoulesin.whyme.ui.theme.*
 
 /**
  * 圆形进度环组件
@@ -92,18 +93,20 @@ fun LearningProgressCard(
             progress = progress,
             size = 100.dp,
             strokeWidth = 10.dp,
-            progressColor = MaterialTheme.colorScheme.primary,
+            progressColor = AccentViolet,
+            backgroundColor = BorderStandard,
             centerContent = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = "$learned",
                         style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight(510),
+                        color = PrimaryText
                     )
                     Text(
                         text = "/ $total",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = MaterialTheme.typography.labelMedium,
+                        color = TertiaryText
                     )
                 }
             }
@@ -112,7 +115,7 @@ fun LearningProgressCard(
         Text(
             text = title,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface
+            color = SecondaryText
         )
     }
 }
@@ -133,13 +136,13 @@ fun StatItem(
         Text(
             text = value,
             style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
+            fontWeight = FontWeight(590),
+            color = AccentViolet
         )
         Text(
             text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            style = MaterialTheme.typography.labelMedium,
+            color = TertiaryText
         )
     }
 }

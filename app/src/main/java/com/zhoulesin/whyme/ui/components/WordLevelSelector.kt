@@ -1,6 +1,7 @@
 package com.zhoulesin.whyme.ui.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.zhoulesin.whyme.domain.model.LevelProgress
 import com.zhoulesin.whyme.domain.model.WordLevel
-import com.zhoulesin.whyme.ui.theme.SkyBlue
+import com.zhoulesin.whyme.ui.theme.*
 
 /**
  * 词库级别选择器
@@ -39,8 +40,9 @@ fun WordLevelSelector(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { expanded = true },
-            shape = RoundedCornerShape(12.dp),
-            color = MaterialTheme.colorScheme.primaryContainer
+            shape = RoundedCornerShape(8.dp),
+            color = Level3Surface,
+            border = BorderStroke(1.dp, BorderStandard)
         ) {
             Row(
                 modifier = Modifier
@@ -52,20 +54,20 @@ fun WordLevelSelector(
                 Column {
                     Text(
                         text = "当前词库",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        style = MaterialTheme.typography.labelMedium,
+                        color = TertiaryText
                     )
                     Text(
                         text = currentLevel.displayName,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight(590),
+                        color = PrimaryText
                     )
                 }
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowDown,
                     contentDescription = "展开",
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    tint = SecondaryText
                 )
             }
         }
@@ -74,7 +76,7 @@ fun WordLevelSelector(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            modifier = Modifier.fillMaxWidth(0.9f)
+            modifier = Modifier.fillMaxWidth(0.9f).background(Level3Surface)
         ) {
             WordLevel.entries.forEach { level ->
                 val isSelected = level == currentLevel
@@ -89,19 +91,20 @@ fun WordLevelSelector(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = level.displayName,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                    fontWeight = if (isSelected) FontWeight(590) else FontWeight(400),
+                                    color = PrimaryText
                                 )
                                 Text(
                                     text = level.description,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = TertiaryText
                                 )
                             }
                             if (isSelected) {
                                 Icon(
                                     imageVector = Icons.Default.Check,
                                     contentDescription = "已选择",
-                                    tint = MaterialTheme.colorScheme.primary
+                                    tint = AccentViolet
                                 )
                             }
                         }
@@ -129,15 +132,18 @@ fun WordLevelCardList(
     onLevelEnabledChanged: (WordLevel, Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(8.dp),
+        color = Level3Surface,
+        border = BorderStroke(1.dp, BorderStandard)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = "词库级别",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight(510),
+                color = PrimaryText
             )
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -157,7 +163,10 @@ fun WordLevelCardList(
                 )
                 
                 if (level != WordLevel.entries.last()) {
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        color = BorderStandard
+                    )
                 }
             }
         }
@@ -185,20 +194,20 @@ private fun WordLevelItem(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = level.displayName,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = if (isCurrentLevel) FontWeight.Bold else FontWeight.Normal,
-                    color = if (isCurrentLevel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = if (isCurrentLevel) FontWeight(590) else FontWeight(400),
+                    color = if (isCurrentLevel) AccentViolet else PrimaryText
                 )
                 if (isCurrentLevel) {
                     Spacer(modifier = Modifier.width(8.dp))
                     Surface(
                         shape = RoundedCornerShape(4.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer
+                        color = BrandIndigo
                     ) {
                         Text(
                             text = "当前",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = PrimaryText,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }
@@ -206,8 +215,8 @@ private fun WordLevelItem(
             }
             Text(
                 text = level.description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = MaterialTheme.typography.labelMedium,
+                color = TertiaryText
             )
             
             // 进度条
@@ -220,14 +229,14 @@ private fun WordLevelItem(
                             .weight(1f)
                             .height(4.dp)
                             .clip(RoundedCornerShape(2.dp)),
-                        color = SkyBlue,
-                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                        color = AccentViolet,
+                        trackColor = BorderStandard
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "${progress.learnedWords}/${progress.totalWords}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = MaterialTheme.typography.labelMedium,
+                        color = TertiaryText
                     )
                 }
             }
@@ -236,7 +245,13 @@ private fun WordLevelItem(
         // 启用开关
         Switch(
             checked = isEnabled,
-            onCheckedChange = onEnabledChanged
+            onCheckedChange = onEnabledChanged,
+            colors = SwitchDefaults.colors(
+                checkedTrackColor = AccentViolet,
+                uncheckedTrackColor = BorderStandard,
+                checkedThumbColor = PrimaryText,
+                uncheckedThumbColor = SecondaryText
+            )
         )
     }
 }
@@ -252,25 +267,31 @@ fun WordLevelChip(
     modifier: Modifier = Modifier
 ) {
     val backgroundColor by animateColorAsState(
-        targetValue = if (isSelected) MaterialTheme.colorScheme.primaryContainer
-                      else MaterialTheme.colorScheme.surfaceVariant,
+        targetValue = if (isSelected) BrandIndigo
+                      else Level3Surface,
         label = "background"
     )
     val textColor by animateColorAsState(
-        targetValue = if (isSelected) MaterialTheme.colorScheme.primary
-                      else MaterialTheme.colorScheme.onSurfaceVariant,
+        targetValue = if (isSelected) PrimaryText
+                      else SecondaryText,
         label = "text"
+    )
+    val borderColor by animateColorAsState(
+        targetValue = if (isSelected) BrandIndigo
+                      else BorderStandard,
+        label = "border"
     )
     
     Surface(
         modifier = modifier.clickable { onClick() },
-        shape = RoundedCornerShape(20.dp),
-        color = backgroundColor
+        shape = RoundedCornerShape(6.dp),
+        color = backgroundColor,
+        border = BorderStroke(1.dp, borderColor)
     ) {
         Text(
             text = level.shortName,
             style = MaterialTheme.typography.labelMedium,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+            fontWeight = if (isSelected) FontWeight(590) else FontWeight(510),
             color = textColor,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
         )

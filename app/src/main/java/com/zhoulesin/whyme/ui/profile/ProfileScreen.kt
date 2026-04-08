@@ -1,5 +1,6 @@
 package com.zhoulesin.whyme.ui.profile
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -20,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zhoulesin.whyme.domain.model.AchievementIcon
-import com.zhoulesin.whyme.ui.theme.SkyBlue
+import com.zhoulesin.whyme.ui.theme.*
 
 @Composable
 fun ProfileScreen(
@@ -36,6 +37,7 @@ fun ProfileScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
+            .background(MarketingBlack)
     ) {
         // 用户信息卡片
         ProfileHeader()
@@ -68,12 +70,11 @@ fun ProfileScreen(
 
 @Composable
 private fun ProfileHeader() {
-    Card(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
+        shape = RoundedCornerShape(8.dp),
+        color = Level3Surface,
+        border = BorderStroke(1.dp, BorderStandard)
     ) {
         Row(
             modifier = Modifier
@@ -86,14 +87,14 @@ private fun ProfileHeader() {
                 modifier = Modifier
                     .size(72.dp)
                     .clip(CircleShape)
-                    .background(SkyBlue),
+                    .background(BrandIndigo),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.Person,
                     contentDescription = null,
                     modifier = Modifier.size(40.dp),
-                    tint = MaterialTheme.colorScheme.onPrimary
+                    tint = PrimaryText
                 )
             }
 
@@ -103,12 +104,13 @@ private fun ProfileHeader() {
                 Text(
                     text = "英语学习者",
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight(510),
+                    color = PrimaryText
                 )
                 Text(
                     text = "持续学习中...",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    color = TertiaryText
                 )
             }
         }
@@ -122,15 +124,18 @@ private fun LearningDataCard(
     streak: Int,
     totalMinutes: Long
 ) {
-    Card(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(8.dp),
+        color = Level3Surface,
+        border = BorderStroke(1.dp, BorderStandard)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = "学习数据",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight(510),
+                color = PrimaryText
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -176,28 +181,31 @@ private fun LearningDataItem(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = AccentViolet,
             modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = value,
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight(590),
+            color = PrimaryText
         )
         Text(
             text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            style = MaterialTheme.typography.labelMedium,
+            color = TertiaryText
         )
     }
 }
 
 @Composable
 private fun AchievementsCard(achievements: List<com.zhoulesin.whyme.domain.model.Achievement>) {
-    Card(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(8.dp),
+        color = Level3Surface,
+        border = BorderStroke(1.dp, BorderStandard)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -208,12 +216,13 @@ private fun AchievementsCard(achievements: List<com.zhoulesin.whyme.domain.model
                 Text(
                     text = "成就",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight(510),
+                    color = PrimaryText
                 )
                 Text(
                     text = "${achievements.count { it.isUnlocked }}/${achievements.size}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.labelMedium,
+                    color = TertiaryText
                 )
             }
 
@@ -249,9 +258,9 @@ private fun AchievementBadge(
                 .clip(CircleShape)
                 .background(
                     if (achievement.isUnlocked)
-                        MaterialTheme.colorScheme.primaryContainer
+                        BrandIndigo
                     else
-                        MaterialTheme.colorScheme.surfaceVariant
+                        BorderStandard
                 ),
             contentAlignment = Alignment.Center
         ) {
@@ -268,19 +277,19 @@ private fun AchievementBadge(
                 },
                 contentDescription = null,
                 tint = if (achievement.isUnlocked)
-                    MaterialTheme.colorScheme.primary
+                    PrimaryText
                 else
-                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    TertiaryText.copy(alpha = 0.5f)
             )
         }
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = achievement.name,
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.labelMedium,
             color = if (achievement.isUnlocked)
-                MaterialTheme.colorScheme.onSurface
+                PrimaryText
             else
-                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                TertiaryText.copy(alpha = 0.5f),
             maxLines = 1
         )
     }
@@ -292,9 +301,11 @@ private fun FunctionList(
     onNavigateToStatistics: () -> Unit,
     onNavigateToSettings: () -> Unit
 ) {
-    Card(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(8.dp),
+        color = Level3Surface,
+        border = BorderStroke(1.dp, BorderStandard)
     ) {
         Column {
             FunctionListItem(
@@ -303,14 +314,18 @@ private fun FunctionList(
                 subtitle = "查看收藏的单词",
                 onClick = onNavigateToFavorites
             )
-            HorizontalDivider()
+            HorizontalDivider(
+                color = BorderStandard
+            )
             FunctionListItem(
                 icon = Icons.Default.BarChart,
                 title = "学习统计",
                 subtitle = "查看详细学习数据",
                 onClick = onNavigateToStatistics
             )
-            HorizontalDivider()
+            HorizontalDivider(
+                color = BorderStandard
+            )
             FunctionListItem(
                 icon = Icons.Default.Settings,
                 title = "设置",
@@ -330,7 +345,7 @@ private fun FunctionListItem(
 ) {
     Surface(
         onClick = onClick,
-        color = MaterialTheme.colorScheme.surface
+        color = Level3Surface
     ) {
         Row(
             modifier = Modifier
@@ -341,7 +356,7 @@ private fun FunctionListItem(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = AccentViolet,
                 modifier = Modifier.size(24.dp)
             )
 
@@ -351,19 +366,20 @@ private fun FunctionListItem(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight(510),
+                    color = PrimaryText
                 )
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.labelMedium,
+                    color = TertiaryText
                 )
             }
 
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = TertiaryText
             )
         }
     }

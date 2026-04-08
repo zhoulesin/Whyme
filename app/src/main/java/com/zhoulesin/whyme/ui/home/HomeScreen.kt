@@ -1,5 +1,6 @@
 package com.zhoulesin.whyme.ui.home
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -18,6 +19,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zhoulesin.whyme.ui.components.CircularProgressRing
 import com.zhoulesin.whyme.ui.components.StatItem
 import com.zhoulesin.whyme.ui.components.WordLevelSelector
+import com.zhoulesin.whyme.ui.theme.*
 import com.zhoulesin.whyme.ui.wordbank.WordBankViewModel
 
 @Composable
@@ -35,18 +37,20 @@ fun HomeScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
+            .background(MarketingBlack)
     ) {
         // 顶部问候语
         Text(
             text = "欢迎回来！",
             style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight(510),
+            color = PrimaryText,
             modifier = Modifier.padding(bottom = 4.dp)
         )
         Text(
             text = "今天也要继续加油哦～",
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = TertiaryText,
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
@@ -103,12 +107,11 @@ private fun TodayProgressCard(
     streak: Int,
     onStartLearning: () -> Unit
 ) {
-    Card(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
+        shape = RoundedCornerShape(8.dp),
+        color = Level3Surface,
+        border = BorderStroke(1.dp, BorderStandard)
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
@@ -127,17 +130,19 @@ private fun TodayProgressCard(
                     progress = progress,
                     size = 140.dp,
                     strokeWidth = 14.dp,
-                    progressColor = MaterialTheme.colorScheme.primary,
+                    progressColor = AccentViolet,
                     centerContent = {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
                                 text = "${((progress * 100).toInt())}%",
                                 style = MaterialTheme.typography.headlineMedium,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight(510),
+                                color = PrimaryText
                             )
                             Text(
                                 text = "今日进度",
-                                style = MaterialTheme.typography.bodySmall
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TertiaryText
                             )
                         }
                     }
@@ -162,12 +167,16 @@ private fun TodayProgressCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(6.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = BrandIndigo,
+                    contentColor = PrimaryText
+                )
             ) {
                 Text(
                     text = "开始学习",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight(510)
                 )
             }
         }
@@ -179,14 +188,14 @@ private fun StatColumn(label: String, value: String) {
     Column {
         Text(
             text = value,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onPrimaryContainer
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight(590),
+            color = PrimaryText
         )
         Text(
             text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+            style = MaterialTheme.typography.labelMedium,
+            color = TertiaryText
         )
     }
 }
@@ -212,12 +221,11 @@ private fun ReviewReminderCard(
     count: Int,
     onReview: () -> Unit
 ) {
-    Card(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
-        )
+        shape = RoundedCornerShape(8.dp),
+        color = Level3Surface,
+        border = BorderStroke(1.dp, BorderStandard)
     ) {
         Row(
             modifier = Modifier
@@ -229,17 +237,29 @@ private fun ReviewReminderCard(
             Column {
                 Text(
                     text = "📚 待复习",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight(590),
+                    color = PrimaryText
                 )
                 Text(
                     text = "你有 $count 个单词需要复习",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onErrorContainer
+                    color = SecondaryText
                 )
             }
-            FilledTonalButton(onClick = onReview) {
-                Text("复习")
+            Button(
+                onClick = onReview,
+                shape = RoundedCornerShape(6.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AccentViolet,
+                    contentColor = PrimaryText
+                )
+            ) {
+                Text(
+                    text = "复习",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight(510)
+                )
             }
         }
     }
@@ -247,12 +267,11 @@ private fun ReviewReminderCard(
 
 @Composable
 private fun DailySentenceCard(sentence: String) {
-    Card(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
-        )
+        shape = RoundedCornerShape(8.dp),
+        color = Level3Surface,
+        border = BorderStroke(1.dp, BorderStandard)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -261,14 +280,14 @@ private fun DailySentenceCard(sentence: String) {
             Text(
                 text = "每日一句",
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                color = TertiaryText
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = sentence,
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSecondaryContainer
+                color = SecondaryText
             )
         }
     }

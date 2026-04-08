@@ -3,6 +3,7 @@ package com.zhoulesin.whyme.ui.components
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -54,7 +55,7 @@ fun WordCard(
         label = "card_color"
     )
 
-    Card(
+    Surface(
         modifier = modifier
             .fillMaxWidth()
             .height(280.dp)
@@ -63,9 +64,9 @@ fun WordCard(
                 cameraDistance = 12f * density
             }
             .clickable { onFlip() },
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = backgroundColor)
+        shape = RoundedCornerShape(8.dp),
+        color = backgroundColor,
+        border = BorderStroke(1.dp, BorderStandard)
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -110,7 +111,7 @@ private fun WordFrontContent(
                 Icon(
                     imageVector = if (word.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                     contentDescription = "收藏",
-                    tint = if (word.isFavorite) Error else MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = if (word.isFavorite) Error else TertiaryText
                 )
             }
         }
@@ -120,9 +121,9 @@ private fun WordFrontContent(
         // 单词
         Text(
             text = word.word,
-            style = MaterialTheme.typography.displayMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
+            style = MaterialTheme.typography.displaySmall,
+            fontWeight = FontWeight(510),
+            color = PrimaryText
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -130,17 +131,22 @@ private fun WordFrontContent(
         // 音标
         Text(
             text = word.phonetic,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.bodyMedium,
             fontStyle = FontStyle.Italic,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = TertiaryText
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // 发音按钮
-        FilledTonalIconButton(
+        Button(
             onClick = onSpeakClick,
-            modifier = Modifier.size(48.dp)
+            modifier = Modifier.size(48.dp),
+            shape = RoundedCornerShape(50),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = BrandIndigo,
+                contentColor = PrimaryText
+            )
         ) {
             Icon(
                 imageVector = Icons.Default.VolumeUp,
@@ -153,8 +159,8 @@ private fun WordFrontContent(
         // 提示
         Text(
             text = "点击卡片查看释义",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            style = MaterialTheme.typography.labelMedium,
+            color = TertiaryText
         )
     }
 }
@@ -176,8 +182,8 @@ private fun WordBackContent(
         Text(
             text = word.word,
             style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
+            fontWeight = FontWeight(510),
+            color = PrimaryText
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -185,9 +191,9 @@ private fun WordBackContent(
         // 释义
         Text(
             text = word.translation,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight(590),
+            color = AccentViolet,
             textAlign = TextAlign.Center
         )
 
@@ -198,7 +204,7 @@ private fun WordBackContent(
             text = word.example,
             style = MaterialTheme.typography.bodyMedium,
             fontStyle = FontStyle.Italic,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = TertiaryText,
             textAlign = TextAlign.Center
         )
 
@@ -207,8 +213,8 @@ private fun WordBackContent(
         // 提示
         Text(
             text = "点击卡片返回",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            style = MaterialTheme.typography.labelMedium,
+            color = TertiaryText
         )
     }
 }
@@ -259,16 +265,16 @@ private fun MasteryButton(
 ) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(6.dp),
         color = color,
-        modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
+        border = BorderStroke(1.dp, BorderStandard)
     ) {
         Text(
             text = text,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Medium
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight(510),
+            color = PrimaryText
         )
     }
 }

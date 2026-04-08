@@ -1,5 +1,6 @@
 package com.zhoulesin.whyme.ui.learning
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -14,6 +15,7 @@ import com.zhoulesin.whyme.domain.model.LearningState
 import com.zhoulesin.whyme.domain.model.ReviewResult
 import com.zhoulesin.whyme.ui.components.MasteryButtons
 import com.zhoulesin.whyme.ui.components.WordCard
+import com.zhoulesin.whyme.ui.theme.*
 
 /**
  * 复习页面 - 专门用于复习旧词
@@ -96,6 +98,7 @@ fun ReviewScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp)
+                .background(MarketingBlack)
         ) {
             when (val state = uiState.learningState) {
                 is LearningState.Idle -> {
@@ -112,7 +115,7 @@ fun ReviewScreen(
                             Text(
                                 text = "正在加载复习单词...",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = TertiaryText
                             )
                         }
                     } else {
@@ -130,19 +133,20 @@ fun ReviewScreen(
                             Text(
                                 text = "太棒了！",
                                 style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = MaterialTheme.typography.headlineSmall.fontWeight
+                                fontWeight = MaterialTheme.typography.headlineSmall.fontWeight,
+                                color = PrimaryText
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = "当前没有待复习单词",
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = PrimaryText
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = "继续保持，系统会在需要时自动安排复习。",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = TertiaryText
                             )
                             Spacer(modifier = Modifier.height(24.dp))
                             OutlinedButton(onClick = onNavigateBack) {
@@ -221,7 +225,7 @@ private fun ReviewContent(
         Text(
             text = "${state.index + 1} / ${state.total}",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = TertiaryText
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -250,7 +254,7 @@ private fun ReviewContent(
             Text(
                 text = "点击卡片查看释义",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = TertiaryText
             )
         }
     }
@@ -279,16 +283,19 @@ private fun ReviewCompletedContent(
         Text(
             text = "复习完成！",
             style = MaterialTheme.typography.headlineSmall,
-            fontWeight = MaterialTheme.typography.headlineSmall.fontWeight
+            fontWeight = MaterialTheme.typography.headlineSmall.fontWeight,
+            color = PrimaryText
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = "今日复习：$reviewed 词",
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.bodyLarge,
+            color = PrimaryText
         )
         Text(
             text = "准确率：${String.format("%.1f", accuracy * 100)}%",
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.bodyLarge,
+            color = PrimaryText
         )
         Spacer(modifier = Modifier.height(24.dp))
         Row(

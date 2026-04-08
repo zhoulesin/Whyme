@@ -1,5 +1,6 @@
 package com.zhoulesin.whyme.ui.statistics
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -23,7 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.zhoulesin.whyme.ui.theme.SkyBlue
+import com.zhoulesin.whyme.ui.theme.*
 
 /**
  * 学习统计页面
@@ -67,6 +68,7 @@ fun StatisticsScreen(
                     .padding(paddingValues)
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp)
+                    .background(MarketingBlack)
             ) {
                 // 今日概览
                 TodayOverviewCard(
@@ -116,18 +118,18 @@ private fun TodayOverviewCard(
     goalProgress: Float,
     dailyGoal: com.zhoulesin.whyme.domain.model.DailyGoal
 ) {
-    Card(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
+        shape = RoundedCornerShape(8.dp),
+        color = Level3Surface,
+        border = BorderStroke(1.dp, BorderStandard)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Text(
                 text = "今日学习",
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight(510),
+                color = PrimaryText
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -140,12 +142,13 @@ private fun TodayOverviewCard(
                 ) {
                     Text(
                         text = "每日目标",
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = PrimaryText
                     )
                     Text(
                         text = "目标: ${dailyGoal.wordsPerDay}词 + ${dailyGoal.reviewPerDay}复习",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        color = TertiaryText
                     )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
@@ -155,13 +158,13 @@ private fun TodayOverviewCard(
                         .fillMaxWidth()
                         .height(8.dp)
                         .clip(RoundedCornerShape(4.dp)),
-                    color = if (goalProgress >= 1f) Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f),
+                    color = if (goalProgress >= 1f) Color(0xFF4CAF50) else BrandIndigo,
+                    trackColor = BorderStandard,
                 )
                 Text(
                     text = "${(goalProgress * 100).toInt()}%",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                    color = TertiaryText,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
@@ -195,15 +198,18 @@ private fun TodayOverviewCard(
 
 @Composable
 private fun WeeklyTrendCard(weeklyRecords: List<DailyRecord>) {
-    Card(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(8.dp),
+        color = Level3Surface,
+        border = BorderStroke(1.dp, BorderStandard)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Text(
                 text = "本周趋势",
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight(510),
+                color = PrimaryText
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -235,7 +241,7 @@ private fun WeeklyTrendCard(weeklyRecords: List<DailyRecord>) {
                                     .width(12.dp)
                                     .height(barHeight * (record.wordsLearned.coerceAtLeast(1).toFloat() / total.coerceAtLeast(1)))
                                     .clip(RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp))
-                                    .background(SkyBlue)
+                                    .background(BrandIndigo)
                             )
 
                             // 复习柱
@@ -244,7 +250,7 @@ private fun WeeklyTrendCard(weeklyRecords: List<DailyRecord>) {
                                     .width(12.dp)
                                     .height(barHeight * (record.wordsReviewed.coerceAtLeast(1).toFloat() / total.coerceAtLeast(1)))
                                     .clip(RoundedCornerShape(bottomStart = 2.dp, bottomEnd = 2.dp))
-                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))
+                                    .background(AccentViolet.copy(alpha = 0.6f))
                             )
                         }
                     }
@@ -261,7 +267,7 @@ private fun WeeklyTrendCard(weeklyRecords: List<DailyRecord>) {
                         Text(
                             text = record.dateText,
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = TertiaryText
                         )
                     }
                 }
@@ -273,10 +279,10 @@ private fun WeeklyTrendCard(weeklyRecords: List<DailyRecord>) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    LegendItem(color = SkyBlue, label = "新词")
+                    LegendItem(color = BrandIndigo, label = "新词")
                     Spacer(modifier = Modifier.width(16.dp))
                     LegendItem(
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                        color = AccentViolet.copy(alpha = 0.6f),
                         label = "复习"
                     )
                 }
@@ -290,7 +296,7 @@ private fun WeeklyTrendCard(weeklyRecords: List<DailyRecord>) {
                     Text(
                         text = "暂无本周数据",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = TertiaryText
                     )
                 }
             }
@@ -306,15 +312,18 @@ private fun LearningOverviewCard(
     currentStreak: Int,
     longestStreak: Int
 ) {
-    Card(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(8.dp),
+        color = Level3Surface,
+        border = BorderStroke(1.dp, BorderStandard)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Text(
                 text = "学习总览",
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight(510),
+                color = PrimaryText
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -368,15 +377,18 @@ private fun WordMasteryCard(
     unknownWords: Int,
     masteryRate: Float
 ) {
-    Card(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(8.dp),
+        color = Level3Surface,
+        border = BorderStroke(1.dp, BorderStandard)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Text(
                 text = "单词掌握情况",
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight(510),
+                color = PrimaryText
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -397,7 +409,7 @@ private fun WordMasteryCard(
 
                         // 背景圆
                         drawCircle(
-                            color = Color.Gray.copy(alpha = 0.2f),
+                            color = BorderStandard,
                             radius = radius,
                             center = center,
                             style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
@@ -407,7 +419,7 @@ private fun WordMasteryCard(
                         val sweepAngle = masteryRate * 360f
                         if (sweepAngle > 0) {
                             drawArc(
-                                color = SkyBlue,
+                                color = BrandIndigo,
                                 startAngle = -90f,
                                 sweepAngle = sweepAngle,
                                 useCenter = false,
@@ -420,7 +432,8 @@ private fun WordMasteryCard(
                     Text(
                         text = "${(masteryRate * 100).toInt()}%",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight(590),
+                        color = PrimaryText
                     )
                 }
 
@@ -429,7 +442,7 @@ private fun WordMasteryCard(
                 // 右侧 - 分布
                 Column {
                     MasteryDistributionItem(
-                        color = SkyBlue,
+                        color = BrandIndigo,
                         label = "已掌握",
                         count = masteredWords,
                         total = totalWords
@@ -457,7 +470,7 @@ private fun WordMasteryCard(
             Text(
                 text = "词库总量: $totalWords 个单词",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = TertiaryText
             )
         }
     }
@@ -473,20 +486,20 @@ private fun StatItem(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+            tint = AccentViolet,
             modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = value,
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onPrimaryContainer
+            fontWeight = FontWeight(590),
+            color = PrimaryText
         )
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+            color = TertiaryText
         )
     }
 }
@@ -501,7 +514,7 @@ private fun OverviewItem(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = AccentViolet,
             modifier = Modifier.size(20.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
@@ -509,12 +522,13 @@ private fun OverviewItem(
             Text(
                 text = value,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight(590),
+                color = PrimaryText
             )
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = TertiaryText
             )
         }
     }
@@ -533,7 +547,7 @@ private fun LegendItem(color: Color, label: String) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = TertiaryText
         )
     }
 }
@@ -560,13 +574,15 @@ private fun MasteryDistributionItem(
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = label,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                color = PrimaryText
             )
         }
         Text(
             text = "$count",
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight(590),
+            color = PrimaryText
         )
     }
 }
