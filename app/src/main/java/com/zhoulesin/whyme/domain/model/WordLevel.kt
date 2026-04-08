@@ -28,7 +28,9 @@ enum class WordLevel(
          * 根据名称获取级别
          */
         fun fromName(name: String): WordLevel {
-            return entries.find { it.name == name } ?: DEFAULT
+            val result = entries.find { it.name.equals(name, ignoreCase = true) } ?: DEFAULT
+            println("WordLevel.fromName: input=$name, result=${result.name}")
+            return result
         }
     }
 }

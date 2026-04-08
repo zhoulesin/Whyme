@@ -7,36 +7,36 @@ import com.google.gson.annotations.SerializedName
  */
 data class WordJson(
     @SerializedName("word")
-    val word: String,
+    val word: String? = null,
     @SerializedName("us")
-    val usPhonetic: String = "",
+    val usPhonetic: String? = null,
     @SerializedName("uk")
-    val ukPhonetic: String = "",
+    val ukPhonetic: String? = null,
     @SerializedName("translations")
-    val translations: List<Translation> = emptyList(),
+    val translations: List<Translation>? = null,
     @SerializedName("phrases")
-    val phrases: List<Phrase> = emptyList(),
+    val phrases: List<Phrase>? = null,
     @SerializedName("sentences")
-    val sentences: List<Sentence> = emptyList()
+    val sentences: List<Sentence>? = null
 )
 
 data class Translation(
     @SerializedName("translation")
-    val translation: String,
+    val translation: String? = null,
     @SerializedName("type")
-    val type: String = ""
+    val type: String? = null
 )
 
 data class Phrase(
     @SerializedName("phrase")
-    val phrase: String,
+    val phrase: String? = null,
     @SerializedName("translation")
-    val translation: String
+    val translation: String? = null
 )
 
 data class Sentence(
     @SerializedName("sentence")
-    val sentence: String,
+    val sentence: String? = null,
     @SerializedName("translation")
-    val translation: String
+    val translation: String? = null
 )

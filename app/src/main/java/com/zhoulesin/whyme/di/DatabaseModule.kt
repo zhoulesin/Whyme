@@ -6,10 +6,12 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.zhoulesin.whyme.data.local.AppDatabase
 import com.zhoulesin.whyme.data.local.DatabaseInitializer
-import com.zhoulesin.whyme.data.local.dao.LearningRecordDao
-import com.zhoulesin.whyme.data.local.dao.WordDao
-import com.zhoulesin.whyme.data.local.dao.UserWordBankSettingsDao
+import com.zhoulesin.whyme.data.local.dao.FavoriteDao
 import com.zhoulesin.whyme.data.local.dao.LevelProgressDao
+import com.zhoulesin.whyme.data.local.dao.LearningRecordDao
+import com.zhoulesin.whyme.data.local.dao.UserWordBankSettingsDao
+import com.zhoulesin.whyme.data.local.dao.UserWordProgressDao
+import com.zhoulesin.whyme.data.local.dao.WordDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -58,6 +60,18 @@ object DatabaseModule {
     @Singleton
     fun provideWordDao(database: AppDatabase): WordDao {
         return database.wordDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideUserWordProgressDao(database: AppDatabase): UserWordProgressDao {
+        return database.userWordProgressDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideFavoriteDao(database: AppDatabase): FavoriteDao {
+        return database.favoriteDao()
     }
 
     @Provides

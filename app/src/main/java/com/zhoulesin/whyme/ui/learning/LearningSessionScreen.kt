@@ -203,7 +203,7 @@ fun LearningSessionScreen(
                         isFlipped = uiState.isFlipped,
                         onFlip = { viewModel.flipCard() },
                         onMarkWord = { result -> viewModel.markWord(result) },
-                        onToggleFavorite = { viewModel.toggleFavorite(state.currentWord.id) },
+                        onToggleFavorite = { wordId -> viewModel.toggleFavorite(wordId) },
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -266,7 +266,7 @@ private fun LearningContent(
     isFlipped: Boolean,
     onFlip: () -> Unit,
     onMarkWord: (ReviewResult) -> Unit,
-    onToggleFavorite: () -> Unit,
+    onToggleFavorite: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -294,7 +294,7 @@ private fun LearningContent(
             word = state.currentWord,
             isFlipped = isFlipped,
             onFlip = onFlip,
-            onFavoriteClick = onToggleFavorite,
+            onFavoriteClick = { onToggleFavorite(state.currentWord.id) },
             onSpeakClick = { /* TODO: TTS */ }
         )
 

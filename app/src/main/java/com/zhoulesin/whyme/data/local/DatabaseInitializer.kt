@@ -13,6 +13,7 @@ import java.io.InputStreamReader
 
 /**
  * 数据库初始化器 - 从assets加载词库
+ * 新的初始化逻辑：只插入单词基础信息，不插入学习状态和收藏状态
  */
 class DatabaseInitializer(
     private val context: Context
@@ -25,8 +26,7 @@ class DatabaseInitializer(
         val level: WordLevel
     )
 
-    // 词库文件列表。
-    // 同一个单词允许同时存在于多个级别中，因此这里不做跨词库去重。
+    // 词库文件列表
     private val wordFiles = listOf(
         WordSource("words/GaoZhong.json", "高中词汇", WordLevel.GAOZHONG),
         WordSource("words/cet4.json", "CET4", WordLevel.CET4),
@@ -39,7 +39,7 @@ class DatabaseInitializer(
     /**
      * 检查是否需要初始化词库
      */
-    suspend fun shouldInitializeWordCount(context: Context, wordDao: WordDao): Boolean {
+    suspend fun shouldInitializeWordCount(wordDao: WordDao): Boolean {
         return withContext(Dispatchers.IO) {
             wordDao.getWordCount() == 0
         }
@@ -62,7 +62,9 @@ class DatabaseInitializer(
             }
 
             // 批量插入
-            wordDao.insertWords(words)
+            if (words.isNotEmpty()) {
+                wordDao.insertWords(words)
+            }
         }
     }
 
@@ -75,43 +77,58 @@ class DatabaseInitializer(
                 InputStreamReader(inputStream).use { reader ->
                     val type = object : TypeToken<List<WordJson>>() {}.type
                     val wordJsonList: List<WordJson> = gson.fromJson(reader, type)
-                    wordJsonList.map { it.toWordEntity(source) }
+                    println("DatabaseInitializer.loadWordsFromAsset: fileName=${source.fileName}, wordBank=${source.wordBank}, level=${source.level.name}, count=${wordJsonList.size}")
+                    wordJsonList.mapNotNull { it.toWordEntityOrNull(source) }
                 }
             }
         } catch (e: Exception) {
             e.printStackTrace()
+            println("DatabaseInitializer.loadWordsFromAsset: Error loading ${source.fileName}: ${e.message}")
             emptyList()
         }
     }
 
     /**
      * 将WordJson转换为WordEntity
+     * 如果单词为空则返回null
      */
-    private fun WordJson.toWordEntity(source: WordSource): WordEntity {
+    private fun WordJson.toWordEntityOrNull(source: WordSource): WordEntity? {
+        val wordText = word?.trim()
+        if (wordText.isNullOrEmpty()) return null
+
         // 合并所有翻译
-        val definition = translations.joinToString("; ") {
-            if (it.type.isNotEmpty()) "${it.type}. ${it.translation}" else it.translation
-        }
+        val definition = translations?.joinToString("; ") {
+            val type = it.type ?: ""
+            val translation = it.translation ?: ""
+            if (type.isNotEmpty()) "$type. $translation" else translation
+        } ?: ""
 
         // 取第一个例句
-        val example = sentences.firstOrNull()?.let {
-            "\"${it.sentence}\"\n${it.translation}"
+        val example = sentences?.firstOrNull()?.let {
+            val sentence = it.sentence ?: ""
+            val translation = it.translation ?: ""
+            "\"$sentence\"\n$translation"
         } ?: ""
 
         // 合并短语
-        val phraseText = phrases.take(3).joinToString("; ") {
-            "${it.phrase} - ${it.translation}"
-        }
+        val phraseText = phrases?.take(3)?.joinToString("; ") {
+            val phrase = it.phrase ?: ""
+            val translation = it.translation ?: ""
+            "$phrase - $translation"
+        } ?: ""
 
         // 音标（优先美式）
-        val phonetic = if (usPhonetic.isNotEmpty()) usPhonetic else ukPhonetic
+        val phonetic = if (usPhonetic?.isNotEmpty() == true) usPhonetic else ukPhonetic ?: ""
+
+        // 获取第一个翻译
+        val firstTranslation = translations?.firstOrNull()?.translation ?: ""
 
         return WordEntity(
-            word = word.trim(),
+            word = wordText,
             phonetic = phonetic,
             definition = definition,
             example = example,
-            translation = translations.firstOrNull()?.translation ?: "",
+            translation = firstTranslation,
             wordBank = source.wordBank,
             level = source.level.name
         )
