@@ -1,5 +1,6 @@
 package com.zhoulesin.whyme.ui.learning
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -14,68 +15,93 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zhoulesin.whyme.ui.components.WordCard
+import com.zhoulesin.whyme.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WordDetailScreen(
     wordId: Long,
     onNavigateBack: () -> Unit,
-    viewModel: LearningViewModel = hiltViewModel()
+    viewModel: WordDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var isFlipped by remember { mutableStateOf(false) }
 
-    val word = remember(uiState.wordsToLearn, uiState.wordsForReview, wordId) {
-        (uiState.wordsToLearn + uiState.wordsForReview).find { it.id == wordId }
-    }
-
     Scaffold(
+        containerColor = MarketingBlack,
         topBar = {
             TopAppBar(
-                title = { Text("单词详情") },
+                title = { Text("单词详情", color = PrimaryText) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "返回"
+                            contentDescription = "返回",
+                            tint = TertiaryText
                         )
                     }
                 },
                 actions = {
-                    word?.let {
-                        IconButton(onClick = { viewModel.toggleFavorite(wordId) }) {
+                    uiState.word?.let { word ->
+                        IconButton(onClick = { viewModel.toggleFavorite() }) {
                             Icon(
-                                imageVector = if (it.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                                imageVector = if (word.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                                 contentDescription = "收藏",
-                                tint = if (it.isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+                                tint = if (word.isFavorite) Error else TertiaryText
                             )
                         }
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Level3Surface
+                )
             )
         }
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(MarketingBlack)
                 .padding(paddingValues)
                 .padding(16.dp),
             contentAlignment = Alignment.Center
         ) {
-            word?.let {
-                WordCard(
-                    word = it,
-                    isFlipped = isFlipped,
-                    onFlip = { isFlipped = !isFlipped },
-                    onFavoriteClick = { viewModel.toggleFavorite(wordId) },
-                    onSpeakClick = { /* TODO: TTS */ }
-                )
-            } ?: run {
-                Text(
-                    text = "单词不存在",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            when {
+                uiState.isLoading -> {
+                    CircularProgressIndicator(
+                        color = BrandIndigo
+                    )
+                }
+                uiState.error != null -> {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = uiState.error ?: "加载失败",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = PrimaryText
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = { viewModel.refresh() },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = BrandIndigo,
+                                contentColor = PrimaryText
+                            )
+                        ) {
+                            Text("重试")
+                        }
+                    }
+                }
+                uiState.word != null -> {
+                    WordCard(
+                        word = uiState.word!!,
+                        isFlipped = isFlipped,
+                        onFlip = { isFlipped = !isFlipped },
+                        onFavoriteClick = { viewModel.toggleFavorite() },
+                        onSpeakClick = { /* TODO: TTS */ }
+                    )
+                }
             }
         }
     }
