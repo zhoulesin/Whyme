@@ -8,6 +8,11 @@ import com.zhoulesin.whyme.data.local.dao.FavoriteDao
 import com.zhoulesin.whyme.data.local.dao.UserWordBankSettingsDao
 import com.zhoulesin.whyme.data.local.dao.UserWordProgressDao
 import com.zhoulesin.whyme.data.local.dao.WordDao
+import com.zhoulesin.whyme.data.local.dao.LearningRecordDao
+import com.zhoulesin.whyme.data.local.dao.DailyLearningRecordDao
+import com.zhoulesin.whyme.data.local.dao.ReviewRecordDao
+import com.zhoulesin.whyme.data.local.dao.TestRecordDao
+import com.zhoulesin.whyme.data.local.dao.CheckInRecordDao
 import com.zhoulesin.whyme.data.datastore.CurrentUser
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -67,6 +72,11 @@ class UserDatabaseManager @Inject constructor(
     fun getUserWordProgressDao(): UserWordProgressDao = getDatabase().userWordProgressDao()
     fun getFavoriteDao(): FavoriteDao = getDatabase().favoriteDao()
     fun getUserWordBankSettingsDao(): UserWordBankSettingsDao = getDatabase().userWordBankSettingsDao()
+    fun getLearningRecordDao(): LearningRecordDao = getDatabase().learningRecordDao()
+    fun getDailyLearningRecordDao(): DailyLearningRecordDao = getDatabase().dailyLearningRecordDao()
+    fun getReviewRecordDao(): ReviewRecordDao = getDatabase().reviewRecordDao()
+    fun getTestRecordDao(): TestRecordDao = getDatabase().testRecordDao()
+    fun getCheckInRecordDao(): CheckInRecordDao = getDatabase().checkInRecordDao()
 
     @Synchronized
     fun switchUser(userId: String) {

@@ -5,6 +5,11 @@ import com.zhoulesin.whyme.data.local.dao.FavoriteDao
 import com.zhoulesin.whyme.data.local.dao.UserWordBankSettingsDao
 import com.zhoulesin.whyme.data.local.dao.UserWordProgressDao
 import com.zhoulesin.whyme.data.local.dao.WordDao
+import com.zhoulesin.whyme.data.local.dao.LearningRecordDao
+import com.zhoulesin.whyme.data.local.dao.DailyLearningRecordDao
+import com.zhoulesin.whyme.data.local.dao.ReviewRecordDao
+import com.zhoulesin.whyme.data.local.dao.TestRecordDao
+import com.zhoulesin.whyme.data.local.dao.CheckInRecordDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -37,5 +42,35 @@ object DatabaseModule {
     @Singleton
     fun provideUserWordBankSettingsDao(userDatabaseManager: UserDatabaseManager): UserWordBankSettingsDao {
         return userDatabaseManager.getUserWordBankSettingsDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideLearningRecordDao(userDatabaseManager: UserDatabaseManager): LearningRecordDao {
+        return userDatabaseManager.getLearningRecordDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideDailyLearningRecordDao(userDatabaseManager: UserDatabaseManager): DailyLearningRecordDao {
+        return userDatabaseManager.getDailyLearningRecordDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideReviewRecordDao(userDatabaseManager: UserDatabaseManager): ReviewRecordDao {
+        return userDatabaseManager.getReviewRecordDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideTestRecordDao(userDatabaseManager: UserDatabaseManager): TestRecordDao {
+        return userDatabaseManager.getTestRecordDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideCheckInRecordDao(userDatabaseManager: UserDatabaseManager): CheckInRecordDao {
+        return userDatabaseManager.getCheckInRecordDao()
     }
 }

@@ -140,4 +140,117 @@ interface WordRepository {
      * 获取所有已学习的单词
      */
     fun getAllLearnedWords(): Flow<List<Word>>
+
+    // 新增方法：学习记录相关
+
+    /**
+     * 记录单词学习
+     * @param wordId 单词ID
+     * @param level 词库级别
+     * @param masteryLevel 掌握级别
+     */
+    suspend fun recordWordLearning(wordId: Long, level: String, masteryLevel: Int)
+
+    /**
+     * 获取单词的学习记录
+     */
+    fun getWordLearningRecords(wordId: Long): Flow<List<com.zhoulesin.whyme.data.local.entity.LearningRecordEntity>>
+
+    /**
+     * 获取指定日期范围内的学习记录
+     */
+    fun getLearningRecordsByDateRange(startTime: Long, endTime: Long): Flow<List<com.zhoulesin.whyme.data.local.entity.LearningRecordEntity>>
+
+    /**
+     * 获取指定级别的学习记录
+     */
+    fun getLearningRecordsByLevel(level: String): Flow<List<com.zhoulesin.whyme.data.local.entity.LearningRecordEntity>>
+
+    // 新增方法：每日学习记录相关
+
+    /**
+     * 记录每日学习数据
+     */
+    suspend fun recordDailyLearning(date: Long, wordsLearned: Int, wordsReviewed: Int, correctCount: Int, totalQuestions: Int, durationMinutes: Int, accuracy: Float)
+
+    /**
+     * 获取指定日期的学习记录
+     */
+    suspend fun getDailyLearningRecord(date: Long): com.zhoulesin.whyme.data.local.entity.DailyLearningRecordEntity?
+
+    /**
+     * 获取最近的学习记录
+     */
+    fun getRecentDailyLearningRecords(limit: Int): Flow<List<com.zhoulesin.whyme.data.local.entity.DailyLearningRecordEntity>>
+
+    /**
+     * 获取指定日期范围内的学习记录
+     */
+    fun getDailyLearningRecordsByDateRange(startDate: Long, endDate: Long): Flow<List<com.zhoulesin.whyme.data.local.entity.DailyLearningRecordEntity>>
+
+    // 新增方法：复习记录相关
+
+    /**
+     * 记录单词复习
+     */
+    suspend fun recordWordReview(wordId: Long, level: String, masteryLevel: Int, isCorrect: Boolean, reviewResult: String?, durationSeconds: Int)
+
+    /**
+     * 获取单词的复习记录
+     */
+    fun getWordReviewRecords(wordId: Long): Flow<List<com.zhoulesin.whyme.data.local.entity.ReviewRecordEntity>>
+
+    /**
+     * 获取指定日期范围内的复习记录
+     */
+    fun getReviewRecordsByDateRange(startTime: Long, endTime: Long): Flow<List<com.zhoulesin.whyme.data.local.entity.ReviewRecordEntity>>
+
+    // 新增方法：测试记录相关
+
+    /**
+     * 记录测试
+     */
+    suspend fun recordTest(testType: String, totalQuestions: Int, correctCount: Int, accuracy: Float, durationSeconds: Int, questionCount: Int, source: String?)
+
+    /**
+     * 获取所有测试记录
+     */
+    fun getAllTestRecords(): Flow<List<com.zhoulesin.whyme.data.local.entity.TestRecordEntity>>
+
+    /**
+     * 获取指定日期范围内的测试记录
+     */
+    fun getTestRecordsByDateRange(startTime: Long, endTime: Long): Flow<List<com.zhoulesin.whyme.data.local.entity.TestRecordEntity>>
+
+    // 新增方法：打卡记录相关
+
+    /**
+     * 记录打卡
+     */
+    suspend fun recordCheckIn(date: Long, learningMinutes: Int, wordsLearned: Int, wordsReviewed: Int)
+
+    /**
+     * 获取指定日期的打卡记录
+     */
+    suspend fun getCheckInRecord(date: Long): com.zhoulesin.whyme.data.local.entity.CheckInRecordEntity?
+
+    /**
+     * 获取所有打卡记录
+     */
+    fun getAllCheckInRecords(): Flow<List<com.zhoulesin.whyme.data.local.entity.CheckInRecordEntity>>
+
+    /**
+     * 获取当前连续打卡天数
+     */
+    suspend fun getCurrentStreak(): Int
+
+    /**
+     * 获取最长连续打卡天数
+     */
+    suspend fun getLongestStreak(): Int
+
+    /**
+     * 获取总打卡天数
+     */
+    suspend fun getTotalCheckInDays(): Int
 }

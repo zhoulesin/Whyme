@@ -29,7 +29,8 @@ sealed class LearningState {
         val currentWord: Word,
         val index: Int,
         val total: Int,
-        val mode: LearningMode = LearningMode.NEW_WORD
+        val mode: LearningMode = LearningMode.NEW_WORD,
+        val startTime: Long = System.currentTimeMillis()
     ) : LearningState()
 
     data class Testing(

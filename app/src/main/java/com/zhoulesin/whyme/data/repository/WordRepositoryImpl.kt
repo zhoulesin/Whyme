@@ -3,8 +3,18 @@ package com.zhoulesin.whyme.data.repository
 import com.zhoulesin.whyme.data.local.dao.FavoriteDao
 import com.zhoulesin.whyme.data.local.dao.UserWordProgressDao
 import com.zhoulesin.whyme.data.local.dao.WordDao
+import com.zhoulesin.whyme.data.local.dao.LearningRecordDao
+import com.zhoulesin.whyme.data.local.dao.DailyLearningRecordDao
+import com.zhoulesin.whyme.data.local.dao.ReviewRecordDao
+import com.zhoulesin.whyme.data.local.dao.TestRecordDao
+import com.zhoulesin.whyme.data.local.dao.CheckInRecordDao
 import com.zhoulesin.whyme.data.local.entity.UserWordProgressEntity
 import com.zhoulesin.whyme.data.local.entity.FavoriteEntity
+import com.zhoulesin.whyme.data.local.entity.LearningRecordEntity
+import com.zhoulesin.whyme.data.local.entity.DailyLearningRecordEntity
+import com.zhoulesin.whyme.data.local.entity.ReviewRecordEntity
+import com.zhoulesin.whyme.data.local.entity.TestRecordEntity
+import com.zhoulesin.whyme.data.local.entity.CheckInRecordEntity
 import com.zhoulesin.whyme.data.local.entity.toDomain
 import com.zhoulesin.whyme.data.local.entity.toDomainList
 import com.zhoulesin.whyme.data.local.entity.toEntity
@@ -25,7 +35,12 @@ import javax.inject.Singleton
 class WordRepositoryImpl @Inject constructor(
     private val wordDao: WordDao,
     private val userWordProgressDao: UserWordProgressDao,
-    private val favoriteDao: FavoriteDao
+    private val favoriteDao: FavoriteDao,
+    private val learningRecordDao: LearningRecordDao,
+    private val dailyLearningRecordDao: DailyLearningRecordDao,
+    private val reviewRecordDao: ReviewRecordDao,
+    private val testRecordDao: TestRecordDao,
+    private val checkInRecordDao: CheckInRecordDao
 ) : WordRepository {
 
     private suspend fun getFavoriteIds(): Set<Long> {
@@ -238,5 +253,150 @@ class WordRepositoryImpl @Inject constructor(
                     wordEntity.toDomain(progress, isFavorite)
                 }
             }
+    }
+
+    override suspend fun recordWordLearning(wordId: Long, level: String, masteryLevel: Int) {
+        val learningRecord = LearningRecordEntity(
+            wordId = wordId,
+            level = level,
+            masteryLevel = masteryLevel,
+            isMastered = masteryLevel >= 4
+        )
+        learningRecordDao.insertRecord(learningRecord)
+    }
+
+    override fun getWordLearningRecords(wordId: Long): Flow<List<LearningRecordEntity>> {
+        return learningRecordDao.getRecordsByWordId(wordId)
+    }
+
+    override fun getLearningRecordsByDateRange(startTime: Long, endTime: Long): Flow<List<LearningRecordEntity>> {
+        return learningRecordDao.getRecordsByDateRange(startTime, endTime)
+    }
+
+    override fun getLearningRecordsByLevel(level: String): Flow<List<LearningRecordEntity>> {
+        return learningRecordDao.getRecordsByLevel(level)
+    }
+
+    override suspend fun recordDailyLearning(date: Long, wordsLearned: Int, wordsReviewed: Int, correctCount: Int, totalQuestions: Int, durationMinutes: Int, accuracy: Float) {
+        val existingRecord = dailyLearningRecordDao.getRecordByDate(date)
+        if (existingRecord != null) {
+            // 更新现有记录
+            dailyLearningRecordDao.updateRecord(
+                date = date,
+                wordsLearned = wordsLearned,
+                wordsReviewed = wordsReviewed,
+                correctCount = correctCount,
+                totalQuestions = totalQuestions,
+                durationMinutes = durationMinutes,
+                accuracy = accuracy
+            )
+        } else {
+            // 创建新记录
+            val newRecord = DailyLearningRecordEntity(
+                date = date,
+                wordsLearned = wordsLearned,
+                wordsReviewed = wordsReviewed,
+                correctCount = correctCount,
+                totalQuestions = totalQuestions,
+                durationMinutes = durationMinutes,
+                accuracy = accuracy
+            )
+            dailyLearningRecordDao.insertRecord(newRecord)
+        }
+    }
+
+    override suspend fun getDailyLearningRecord(date: Long): DailyLearningRecordEntity? {
+        return dailyLearningRecordDao.getRecordByDate(date)
+    }
+
+    override fun getRecentDailyLearningRecords(limit: Int): Flow<List<DailyLearningRecordEntity>> {
+        return dailyLearningRecordDao.getRecentRecords(limit)
+    }
+
+    override fun getDailyLearningRecordsByDateRange(startDate: Long, endDate: Long): Flow<List<DailyLearningRecordEntity>> {
+        return dailyLearningRecordDao.getRecordsByDateRange(startDate, endDate)
+    }
+
+    // 复习记录相关方法
+
+    override suspend fun recordWordReview(wordId: Long, level: String, masteryLevel: Int, isCorrect: Boolean, reviewResult: String?, durationSeconds: Int) {
+        val reviewRecord = ReviewRecordEntity(
+            wordId = wordId,
+            level = level,
+            masteryLevel = masteryLevel,
+            durationSeconds = durationSeconds,
+            isCorrect = isCorrect,
+            reviewResult = reviewResult
+        )
+        reviewRecordDao.insertRecord(reviewRecord)
+    }
+
+    override fun getWordReviewRecords(wordId: Long): Flow<List<ReviewRecordEntity>> {
+        return reviewRecordDao.getRecordsByWordId(wordId)
+    }
+
+    override fun getReviewRecordsByDateRange(startTime: Long, endTime: Long): Flow<List<ReviewRecordEntity>> {
+        return reviewRecordDao.getRecordsByDateRange(startTime, endTime)
+    }
+
+    // 测试记录相关方法
+
+    override suspend fun recordTest(testType: String, totalQuestions: Int, correctCount: Int, accuracy: Float, durationSeconds: Int, questionCount: Int, source: String?) {
+        val testRecord = TestRecordEntity(
+            testType = testType,
+            totalQuestions = totalQuestions,
+            correctCount = correctCount,
+            accuracy = accuracy,
+            durationSeconds = durationSeconds,
+            questionCount = questionCount,
+            source = source
+        )
+        testRecordDao.insertRecord(testRecord)
+    }
+
+    override fun getAllTestRecords(): Flow<List<TestRecordEntity>> {
+        return testRecordDao.getAllRecords()
+    }
+
+    override fun getTestRecordsByDateRange(startTime: Long, endTime: Long): Flow<List<TestRecordEntity>> {
+        return testRecordDao.getRecordsByDateRange(startTime, endTime)
+    }
+
+    // 打卡记录相关方法
+
+    override suspend fun recordCheckIn(date: Long, learningMinutes: Int, wordsLearned: Int, wordsReviewed: Int) {
+        val totalDays = checkInRecordDao.getTotalCheckInDays() + 1
+        val currentStreak = checkInRecordDao.getCurrentStreak() ?: 0
+        val newStreak = currentStreak + 1
+        
+        val checkInRecord = CheckInRecordEntity(
+            checkInDate = date,
+            streak = newStreak,
+            totalDays = totalDays,
+            learningMinutes = learningMinutes,
+            wordsLearned = wordsLearned,
+            wordsReviewed = wordsReviewed
+        )
+        checkInRecordDao.insertRecord(checkInRecord)
+    }
+
+    override suspend fun getCheckInRecord(date: Long): CheckInRecordEntity? {
+        return checkInRecordDao.getRecordByDate(date)
+    }
+
+    override fun getAllCheckInRecords(): Flow<List<CheckInRecordEntity>> {
+        return checkInRecordDao.getAllRecords()
+    }
+
+    override suspend fun getCurrentStreak(): Int {
+        return checkInRecordDao.getCurrentStreak() ?: 0
+    }
+
+    override suspend fun getLongestStreak(): Int {
+        return checkInRecordDao.getLongestStreak()
+    }
+
+    override suspend fun getTotalCheckInDays(): Int {
+        return checkInRecordDao.getTotalCheckInDays()
     }
 }

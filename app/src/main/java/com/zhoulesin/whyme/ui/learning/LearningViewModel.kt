@@ -203,7 +203,31 @@ class LearningViewModel @Inject constructor(
         viewModelScope.launch {
             val currentState = _uiState.value.learningState
             if (currentState is LearningState.Learning) {
-                updateWordReviewUseCase(currentState.currentWord.id, result)
+                val word = currentState.currentWord
+                val masteryLevel = when (result) {
+                    ReviewResult.EASY -> 5
+                    ReviewResult.GOOD -> 4
+                    ReviewResult.HARD -> 2
+                    ReviewResult.AGAIN -> 1
+                }
+                val isCorrect = result == ReviewResult.GOOD || result == ReviewResult.EASY
+                val durationSeconds = (System.currentTimeMillis() - currentState.startTime) / 1000
+                
+                // 更新单词复习信息
+                updateWordReviewUseCase(word.id, result)
+                
+                // 记录学习记录
+                wordRepository.recordWordLearning(word.id, word.level.name, masteryLevel)
+                
+                // 记录复习记录
+                wordRepository.recordWordReview(
+                    wordId = word.id,
+                    level = word.level.name,
+                    masteryLevel = masteryLevel,
+                    isCorrect = isCorrect,
+                    reviewResult = result.name,
+                    durationSeconds = durationSeconds.toInt()
+                )
 
                 val isNewWord = currentState.mode == LearningMode.NEW_WORD
 
@@ -219,7 +243,7 @@ class LearningViewModel @Inject constructor(
                     val nextIndex = currentState.index + 1
                     if (nextIndex >= currentState.total) {
                         // 学习完成 - 先记录会话，再更新状态
-                        val durationSeconds = (System.currentTimeMillis() - state.sessionStats.startTime) / 1000
+                        val totalDurationSeconds = (System.currentTimeMillis() - state.sessionStats.startTime) / 1000
                         val finalStats = newStats
 
                         // 同步记录会话
@@ -228,7 +252,30 @@ class LearningViewModel @Inject constructor(
                                 wordsLearned = finalStats.wordsLearned,
                                 wordsReviewed = finalStats.wordsReviewed,
                                 correctCount = finalStats.correctCount,
-                                durationSeconds = durationSeconds
+                                durationSeconds = totalDurationSeconds
+                            )
+                            
+                            // 记录每日学习记录
+                            val todayStart = java.time.LocalDate.now().atStartOfDay().toEpochSecond(java.time.ZoneOffset.systemDefault().rules.getOffset(java.time.Instant.now())) * 1000
+                            val accuracy = if (finalStats.wordsReviewed > 0) {
+                                finalStats.correctCount.toFloat() / finalStats.wordsReviewed
+                            } else 0f
+                            wordRepository.recordDailyLearning(
+                                date = todayStart,
+                                wordsLearned = finalStats.wordsLearned,
+                                wordsReviewed = finalStats.wordsReviewed,
+                                correctCount = finalStats.correctCount,
+                                totalQuestions = finalStats.wordsReviewed,
+                                durationMinutes = (totalDurationSeconds / 60).toInt(),
+                                accuracy = accuracy
+                            )
+                            
+                            // 记录打卡
+                            wordRepository.recordCheckIn(
+                                date = todayStart,
+                                learningMinutes = (totalDurationSeconds / 60).toInt(),
+                                wordsLearned = finalStats.wordsLearned,
+                                wordsReviewed = finalStats.wordsReviewed
                             )
                         }
 
@@ -254,7 +301,8 @@ class LearningViewModel @Inject constructor(
                         state.copy(
                             learningState = currentState.copy(
                                 currentWord = nextWord,
-                                index = nextIndex
+                                index = nextIndex,
+                                startTime = System.currentTimeMillis()
                             ),
                             sessionStats = newStats,
                             isFlipped = false
@@ -362,6 +410,7 @@ class LearningViewModel @Inject constructor(
                     // 测试完成 - 先记录会话
                     val durationSeconds = (System.currentTimeMillis() - state.sessionStats.startTime) / 1000
                     val finalStats = newStats
+                    val accuracy = finalStats.correctCount.toFloat() / quizWordPool.size
 
                     // 同步记录会话
                     kotlinx.coroutines.runBlocking {
@@ -371,13 +420,50 @@ class LearningViewModel @Inject constructor(
                             correctCount = finalStats.correctCount,
                             durationSeconds = durationSeconds
                         )
+                        
+                        // 记录每日学习记录
+                        val todayStart = java.time.LocalDate.now().atStartOfDay().toEpochSecond(java.time.ZoneOffset.systemDefault().rules.getOffset(java.time.Instant.now())) * 1000
+                        wordRepository.recordDailyLearning(
+                            date = todayStart,
+                            wordsLearned = 0, // 测试不计入新词学习
+                            wordsReviewed = finalStats.wordsReviewed,
+                            correctCount = finalStats.correctCount,
+                            totalQuestions = finalStats.wordsReviewed,
+                            durationMinutes = (durationSeconds / 60).toInt(),
+                            accuracy = accuracy
+                        )
+                        
+                        // 记录测试记录
+                        wordRepository.recordTest(
+                            testType = currentState.questionType.name,
+                            totalQuestions = finalStats.wordsReviewed,
+                            correctCount = finalStats.correctCount,
+                            accuracy = accuracy,
+                            durationSeconds = durationSeconds.toInt(),
+                            questionCount = quizWordPool.size,
+                            source = QuizSource.ALL.name
+                        )
+                        
+                        // 为每个测试单词记录学习记录
+                        quizWordPool.forEach { word ->
+                            val masteryLevel = if (word.masteryLevel > 0) word.masteryLevel else 1
+                            wordRepository.recordWordLearning(word.id, word.level.name, masteryLevel)
+                        }
+                        
+                        // 记录打卡
+                        wordRepository.recordCheckIn(
+                            date = todayStart,
+                            learningMinutes = (durationSeconds / 60).toInt(),
+                            wordsLearned = 0, // 测试不计入新词学习
+                            wordsReviewed = finalStats.wordsReviewed
+                        )
                     }
 
                     state.copy(
                         learningState = LearningState.QuizResult(
                             correctCount = finalStats.correctCount,
                             totalCount = quizWordPool.size,
-                            accuracy = finalStats.correctCount.toFloat() / quizWordPool.size,
+                            accuracy = accuracy,
                             mode = LearningMode.QUIZ
                         ),
                         sessionStats = finalStats,
