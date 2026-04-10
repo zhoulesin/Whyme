@@ -1,5 +1,6 @@
 package com.zhoulesin.whyme.data.repository
 
+import com.zhoulesin.whyme.data.datastore.CurrentUser
 import com.zhoulesin.whyme.data.local.PreferencesDataStore
 import com.zhoulesin.whyme.data.local.dao.LearningRecordDao
 import com.zhoulesin.whyme.data.local.entity.LearningRecordEntity
@@ -17,34 +18,33 @@ import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * 学习记录仓库实现
- */
 @Singleton
 class LearningRepositoryImpl @Inject constructor(
     private val learningRecordDao: LearningRecordDao,
     private val preferencesDataStore: PreferencesDataStore
 ) : LearningRepository {
 
+    private fun uid(): String = CurrentUser.userId
+
     override fun getTodayRecord(): Flow<LearningRecord?> =
-        learningRecordDao.getRecordByDate(LocalDate.now().toEpochDay())
+        learningRecordDao.getRecordByDate(uid(), LocalDate.now().toEpochDay())
             .map { it?.toDomain() }
 
     override suspend fun getRecordByDate(date: LocalDate): LearningRecord? =
-        learningRecordDao.getRecordByDateSync(date.toEpochDay())?.toDomain()
+        learningRecordDao.getRecordByDateSync(uid(), date.toEpochDay())?.toDomain()
 
     override fun getRecordsBetween(startDate: LocalDate, endDate: LocalDate): Flow<List<LearningRecord>> =
-        learningRecordDao.getRecordsBetween(startDate.toEpochDay(), endDate.toEpochDay())
+        learningRecordDao.getRecordsBetween(uid(), startDate.toEpochDay(), endDate.toEpochDay())
             .map { it.toRecordDomainList() }
 
     override suspend fun saveRecord(record: LearningRecord) =
-        learningRecordDao.insertRecord(record.toEntity())
+        learningRecordDao.insertRecord(record.toEntity().copy(userId = uid()))
 
     override suspend fun updateRecord(record: LearningRecord) =
-        learningRecordDao.updateRecord(record.toEntity())
+        learningRecordDao.updateRecord(record.toEntity().copy(userId = uid()))
 
     override fun getUserStats(): Flow<UserStats> = combine(
-        learningRecordDao.getAllRecords(),
+        learningRecordDao.getAllRecords(uid()),
         getTodayRecord(),
         preferencesDataStore.dailyGoal
     ) { allRecords, todayRecord, goal ->
@@ -57,7 +57,7 @@ class LearningRepositoryImpl @Inject constructor(
             totalWordsLearned = totalLearned,
             totalWordsReviewed = totalReviewed,
             currentStreak = streak,
-            longestStreak = streak, // TODO: 从偏好设置获取
+            longestStreak = streak,
             totalLearningMinutes = totalSeconds / 60,
             todayWordsLearned = todayRecord?.wordsLearned ?: 0,
             todayWordsReviewed = todayRecord?.wordsReviewed ?: 0,
@@ -72,7 +72,7 @@ class LearningRepositoryImpl @Inject constructor(
 
     override suspend fun getCurrentStreak(): Int = preferencesDataStore.getCurrentStreak()
 
-    override suspend fun getLongestStreak(): Int = 0 // TODO: 实现
+    override suspend fun getLongestStreak(): Int = 0
 
     override suspend fun recordLearningSession(
         wordsLearned: Int,
@@ -102,8 +102,6 @@ class LearningRepositoryImpl @Inject constructor(
             }
 
             saveRecord(updatedRecord)
-
-            // 更新连续打卡
             updateStreakIfNeeded()
         } catch (e: Exception) {
             e.printStackTrace()

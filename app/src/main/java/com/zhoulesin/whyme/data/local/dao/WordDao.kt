@@ -20,8 +20,11 @@ interface WordDao {
     @Query("SELECT * FROM words WHERE word = :word LIMIT 1")
     suspend fun getWordByWord(word: String): WordEntity?
 
-    @Query("SELECT * FROM words WHERE word LIKE '%' || :query || '%' OR translation LIKE '%' || :query || '%'")
+    @Query("SELECT * FROM words WHERE word LIKE '%' || :query || '%' OR translation LIKE '%' || :query || '%' LIMIT 50")
     fun searchWords(query: String): Flow<List<WordEntity>>
+
+    @Query("SELECT * FROM words WHERE word LIKE '%' || :query || '%' OR translation LIKE '%' || :query || '%' LIMIT :limit")
+    fun searchWords(query: String, limit: Int): Flow<List<WordEntity>>
 
     /**
      * 根据词库获取单词

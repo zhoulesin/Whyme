@@ -2,10 +2,13 @@ package com.zhoulesin.whyme.ui.home
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,6 +29,7 @@ import com.zhoulesin.whyme.ui.wordbank.WordBankViewModel
 fun HomeScreen(
     onNavigateToLearning: () -> Unit,
     onNavigateToReview: () -> Unit,
+    onNavigateToSearch: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
     wordBankViewModel: WordBankViewModel = hiltViewModel()
 ) {
@@ -53,6 +57,36 @@ fun HomeScreen(
             color = TertiaryText,
             modifier = Modifier.padding(bottom = 16.dp)
         )
+
+        // 搜索栏
+        Surface(
+            onClick = onNavigateToSearch,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(8.dp),
+            color = Level3Surface,
+            border = BorderStroke(1.dp, BorderStandard)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = null,
+                    tint = TertiaryText
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "搜索单词、释义...",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TertiaryText
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         // 词库级别选择器
         WordLevelSelector(

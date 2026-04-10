@@ -7,13 +7,17 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.zhoulesin.whyme.data.datastore.UserManager
 import com.zhoulesin.whyme.ui.navigation.AppNavHost
 import com.zhoulesin.whyme.ui.navigation.BottomNavItem
 import com.zhoulesin.whyme.ui.navigation.Screen
@@ -38,6 +42,12 @@ fun MainApp() {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+    val context = LocalContext.current
+    val userManager = remember { UserManager.getInstance(context) }
+
+    LaunchedEffect(Unit) {
+        userManager.restoreLoginState()
+    }
 
     // 判断是否显示底部导航（二级页面不显示）
     val showBottomBar = currentDestination?.route in listOf(
@@ -95,7 +105,8 @@ fun MainApp() {
     ) {
         AppNavHost(
             navController = navController,
-            paddingValues = it
+            paddingValues = it,
+            userManager = userManager
         )
     }
 }

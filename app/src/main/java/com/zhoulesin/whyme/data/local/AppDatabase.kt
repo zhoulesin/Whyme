@@ -2,6 +2,7 @@ package com.zhoulesin.whyme.data.local
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import com.zhoulesin.whyme.data.local.dao.FavoriteDao
 import com.zhoulesin.whyme.data.local.dao.LearningRecordDao
 import com.zhoulesin.whyme.data.local.dao.UserWordBankSettingsDao
@@ -14,20 +15,16 @@ import com.zhoulesin.whyme.data.local.entity.UserWordBankSettingsEntity
 import com.zhoulesin.whyme.data.local.entity.UserWordProgressEntity
 import com.zhoulesin.whyme.data.local.entity.WordEntity
 
-/**
- * 应用数据库
- * 注意：修改表结构后需要清除数据重新安装
- */
 @Database(
     entities = [
-        WordEntity::class,              // 单词基础信息表
-        UserWordProgressEntity::class,  // 用户学习进度表
-        FavoriteEntity::class,          // 收藏表
-        LearningRecordEntity::class,    // 学习记录表
-        UserWordBankSettingsEntity::class,  // 用户词库设置表
-        LevelProgressEntity::class      // 级别学习进度表
+        WordEntity::class,
+        UserWordProgressEntity::class,
+        FavoriteEntity::class,
+        LearningRecordEntity::class,
+        UserWordBankSettingsEntity::class,
+        LevelProgressEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

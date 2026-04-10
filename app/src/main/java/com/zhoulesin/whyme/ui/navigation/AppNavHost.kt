@@ -3,12 +3,17 @@ package com.zhoulesin.whyme.ui.navigation
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.zhoulesin.whyme.data.datastore.UserManager
+import kotlinx.coroutines.launch
+import com.zhoulesin.whyme.ui.auth.LoginScreen
 import com.zhoulesin.whyme.ui.home.HomeScreen
 import com.zhoulesin.whyme.ui.learning.LearningScreen
 import com.zhoulesin.whyme.ui.learning.NewWordLearningScreen
@@ -17,6 +22,7 @@ import com.zhoulesin.whyme.ui.learning.WordDetailScreen
 import com.zhoulesin.whyme.ui.learning.QuizScreen
 import com.zhoulesin.whyme.ui.profile.ProfileScreen
 import com.zhoulesin.whyme.ui.favorites.FavoritesScreen
+import com.zhoulesin.whyme.ui.search.SearchScreen
 import com.zhoulesin.whyme.ui.statistics.StatisticsScreen
 
 /**
@@ -26,13 +32,30 @@ import com.zhoulesin.whyme.ui.statistics.StatisticsScreen
 fun AppNavHost(
     navController: NavHostController,
     paddingValues: PaddingValues,
+    userManager: UserManager,
     modifier: Modifier = Modifier
 ) {
+    val coroutineScope = rememberCoroutineScope()
     NavHost(
         navController = navController,
-        startDestination = Screen.Home.route,
+        startDestination = Screen.Login.route,
         modifier = modifier.padding(paddingValues)
     ) {
+        composable(Screen.Login.route) {
+            LoginScreen(
+                userManager = userManager,
+                onLoginSuccess = {
+                    // 登录成功后导航到首页
+                    navController.navigate(Screen.Home.route) {
+                        // 清除登录页面的导航历史
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
         composable(Screen.Home.route) {
             HomeScreen(
                 onNavigateToLearning = {
@@ -40,6 +63,9 @@ fun AppNavHost(
                 },
                 onNavigateToReview = {
                     navController.navigate(Screen.LearningReview.route)
+                },
+                onNavigateToSearch = {
+                    navController.navigate(Screen.Search.route)
                 }
             )
         }
@@ -113,6 +139,15 @@ fun AppNavHost(
                 },
                 onNavigateToStatistics = {
                     navController.navigate(Screen.Statistics.route)
+                },
+                onLogout = {
+                    coroutineScope.launch {
+                        userManager.logout()
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
                 }
             )
         }
@@ -129,6 +164,15 @@ fun AppNavHost(
         composable(Screen.Statistics.route) {
             StatisticsScreen(
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Search.route) {
+            SearchScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToWordDetail = { wordId ->
+                    navController.navigate(Screen.WordDetail.createRoute(wordId))
+                }
             )
         }
     }

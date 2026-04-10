@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -28,6 +29,7 @@ fun ProfileScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToFavorites: () -> Unit,
     onNavigateToStatistics: () -> Unit,
+    onLogout: () -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -63,7 +65,8 @@ fun ProfileScreen(
         FunctionList(
             onNavigateToFavorites = onNavigateToFavorites,
             onNavigateToStatistics = onNavigateToStatistics,
-            onNavigateToSettings = onNavigateToSettings
+            onNavigateToSettings = onNavigateToSettings,
+            onLogout = onLogout
         )
     }
 }
@@ -299,7 +302,8 @@ private fun AchievementBadge(
 private fun FunctionList(
     onNavigateToFavorites: () -> Unit,
     onNavigateToStatistics: () -> Unit,
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
+    onLogout: () -> Unit
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -331,6 +335,15 @@ private fun FunctionList(
                 title = "设置",
                 subtitle = "每日目标、应用设置",
                 onClick = onNavigateToSettings
+            )
+            HorizontalDivider(
+                color = BorderStandard
+            )
+            FunctionListItem(
+                icon = Icons.AutoMirrored.Filled.Logout,
+                title = "退出登录",
+                subtitle = "切换账号或重新登录",
+                onClick = onLogout
             )
         }
     }
