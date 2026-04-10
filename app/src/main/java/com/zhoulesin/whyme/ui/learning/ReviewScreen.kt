@@ -89,20 +89,18 @@ fun ReviewScreen(
     Scaffold(
         containerColor = MarketingBlack,
         topBar = {
-            TopAppBar(
-                title = { Text("复习旧词", color = PrimaryText) },
+            CompactTopBar(
+                title = "复习旧词",
                 navigationIcon = {
                     IconButton(onClick = { showExitDialog = true }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "退出复习",
-                            tint = TertiaryText
+                            tint = TertiaryText,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Level3Surface
-                )
+                }
             )
         }
     ) {

@@ -89,20 +89,18 @@ fun NewWordLearningScreen(
     Scaffold(
         containerColor = MarketingBlack,
         topBar = {
-            TopAppBar(
-                title = { Text("学习新词", color = PrimaryText) },
+            CompactTopBar(
+                title = "学习新词",
                 navigationIcon = {
                     IconButton(onClick = { showExitDialog = true }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "退出学习",
-                            tint = TertiaryText
+                            tint = TertiaryText,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Level3Surface
-                )
+                }
             )
         }
     ) {

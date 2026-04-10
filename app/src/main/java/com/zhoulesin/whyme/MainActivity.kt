@@ -5,108 +5,62 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.*
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.zhoulesin.whyme.data.datastore.UserManager
+import com.zhoulesin.whyme.data.local.UserDatabaseManager
+import com.zhoulesin.whyme.ui.home.MainScreen
 import com.zhoulesin.whyme.ui.navigation.AppNavHost
-import com.zhoulesin.whyme.ui.navigation.BottomNavItem
 import com.zhoulesin.whyme.ui.navigation.Screen
-import com.zhoulesin.whyme.ui.theme.*
+import com.zhoulesin.whyme.ui.theme.WhyMeEnglishTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var userDatabaseManager: UserDatabaseManager
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            WhyMeEnglishTheme {
-                MainApp()
-            }
-        }
-    }
-}
 
-@Composable
-fun MainApp() {
-    val navController = rememberNavController()
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentDestination = navBackStackEntry?.destination
-    val context = LocalContext.current
-    val userManager = remember { UserManager.getInstance(context) }
+        val userManager = UserManager.getInstance(this)
+        userManager.setUserDatabaseManager(userDatabaseManager)
 
-    LaunchedEffect(Unit) {
-        userManager.restoreLoginState()
-    }
+        scope.launch {
+            userManager.restoreLoginState()
+            val isLoggedIn = userManager.isLoggedIn.first()
 
-    // 判断是否显示底部导航（二级页面不显示）
-    val showBottomBar = currentDestination?.route in listOf(
-        Screen.Home.route,
-        Screen.Learning.route,
-        Screen.Profile.route
-    )
-
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        containerColor = MarketingBlack,
-        contentColor = PrimaryText,
-        bottomBar = {
-            if (showBottomBar) {
-                NavigationBar(
-                    containerColor = PanelDark,
-                    contentColor = SecondaryText,
-                    tonalElevation = 0.dp
-                ) {
-                    BottomNavItem.items.forEach { item ->
-                        val selected = currentDestination?.hierarchy?.any {
-                            it.route == item.route
-                        } == true
-
-                        NavigationBarItem(
-                            selected = selected,
-                            onClick = {
-                                navController.navigate(item.route) {
-                                    // 避免在同一个目的地时创建多个实例
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
-                                    contentDescription = item.title,
-                                    tint = if (selected) PrimaryText else SecondaryText
-                                )
-                            },
-                            label = {
-                                Text(
-                                    item.title,
-                                    color = if (selected) PrimaryText else SecondaryText
-                                )
-                            }
+            enableEdgeToEdge()
+            setContent {
+                WhyMeEnglishTheme {
+                    val navController = rememberNavController()
+                    if (isLoggedIn) {
+                        MainScreen(
+                            navController = navController,
+                            userManager = userManager
+                        )
+                    } else {
+                        AppNavHost(
+                            navController = navController,
+                            paddingValues = androidx.compose.foundation.layout.PaddingValues(),
+                            userManager = userManager,
+                            startDestination = Screen.Login.route
                         )
                     }
                 }
             }
         }
-    ) {
-        AppNavHost(
-            navController = navController,
-            paddingValues = it,
-            userManager = userManager
-        )
     }
 }

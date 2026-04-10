@@ -4,13 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhoulesin.whyme.data.local.AppInitializer
 import com.zhoulesin.whyme.domain.model.DailyGoal
-import com.zhoulesin.whyme.domain.model.LearningRecord
 import com.zhoulesin.whyme.domain.model.UserStats
 import com.zhoulesin.whyme.domain.model.Word
 import com.zhoulesin.whyme.domain.model.WordLevel
-import com.zhoulesin.whyme.domain.usecase.GetTodayRecordUseCase
-import com.zhoulesin.whyme.domain.usecase.GetUserStatsUseCase
 import com.zhoulesin.whyme.domain.usecase.GetDailyGoalUseCase
+import com.zhoulesin.whyme.domain.usecase.GetUserStatsUseCase
 import com.zhoulesin.whyme.domain.usecase.GetWordsForLearningUseCase
 import com.zhoulesin.whyme.domain.usecase.GetWordsForReviewUseCase
 import com.zhoulesin.whyme.domain.repository.WordBankRepository
@@ -32,7 +30,6 @@ data class HomeUiState(
         todayAccuracy = 0f
     ),
     val dailyGoal: DailyGoal = DailyGoal(),
-    val todayRecord: LearningRecord? = null,
     val wordsForReview: List<Word> = emptyList(),
     val newWordsCount: Int = 0,
     val dailySentence: String = "Practice makes perfect! 熟能生巧！",
@@ -46,7 +43,6 @@ data class HomeUiState(
 class HomeViewModel @Inject constructor(
     private val getUserStatsUseCase: GetUserStatsUseCase,
     private val getDailyGoalUseCase: GetDailyGoalUseCase,
-    private val getTodayRecordUseCase: GetTodayRecordUseCase,
     private val getWordsForLearningUseCase: GetWordsForLearningUseCase,
     private val getWordsForReviewUseCase: GetWordsForReviewUseCase,
     private val wordBankRepository: WordBankRepository,
@@ -57,7 +53,6 @@ class HomeViewModel @Inject constructor(
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
-        // 应用启动时初始化词库
         appInitializer.initializeIfNeeded()
         loadData()
     }
@@ -69,9 +64,10 @@ class HomeViewModel @Inject constructor(
                     getWordsForReviewUseCase(),
                     getWordsForLearningUseCase(level = currentLevel)
                 ) { reviewWords, learningWords ->
-                    Triple(currentLevel, reviewWords, learningWords)
+                    Pair(currentLevel, Pair(reviewWords, learningWords))
                 }
-            }.collect { (currentLevel, reviewWords, learningWords) ->
+            }.collect { (currentLevel, pair) ->
+                val (reviewWords, learningWords) = pair
                 _uiState.update {
                     it.copy(
                         currentLevel = currentLevel,
@@ -85,16 +81,14 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             combine(
                 getUserStatsUseCase(),
-                getDailyGoalUseCase(),
-                getTodayRecordUseCase()
-            ) { stats, goal, record ->
-                Triple(stats, goal, record)
-            }.collect { (stats, goal, record) ->
+                getDailyGoalUseCase()
+            ) { stats, goal ->
+                Pair(stats, goal)
+            }.collect { (stats, goal) ->
                 _uiState.update { state ->
                     state.copy(
                         userStats = stats,
                         dailyGoal = goal,
-                        todayRecord = record,
                         isLoading = false,
                         wordDatabaseReady = true
                     )
@@ -103,9 +97,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /**
-     * 刷新数据（当从学习页面返回时调用）
-     */
     fun refresh() {
         loadData()
     }

@@ -4,14 +4,6 @@ import com.zhoulesin.whyme.domain.model.Word
 import com.zhoulesin.whyme.domain.model.WordLevel
 import java.time.LocalDate
 
-/**
- * Word 实体与模型转换
- * 新的转换逻辑：从多个表组合数据
- */
-
-/**
- * 基础单词信息转换（不包含学习状态和收藏状态）
- */
 fun WordEntity.toDomain(): Word = Word(
     id = id,
     word = word,
@@ -23,9 +15,6 @@ fun WordEntity.toDomain(): Word = Word(
     level = WordLevel.fromName(level)
 )
 
-/**
- * 带学习状态的转换
- */
 fun WordEntity.toDomain(progress: UserWordProgressEntity?): Word = Word(
     id = id,
     word = word,
@@ -43,9 +32,6 @@ fun WordEntity.toDomain(progress: UserWordProgressEntity?): Word = Word(
     level = WordLevel.fromName(level)
 )
 
-/**
- * 带学习状态和收藏状态的完整转换
- */
 fun WordEntity.toDomain(
     progress: UserWordProgressEntity?,
     isFavorite: Boolean
@@ -67,9 +53,6 @@ fun WordEntity.toDomain(
     level = WordLevel.fromName(level)
 )
 
-/**
- * 从 Domain 模型转换为 Entity（仅基础信息）
- */
 fun Word.toEntity(): WordEntity = WordEntity(
     id = id,
     word = word,
@@ -81,9 +64,6 @@ fun Word.toEntity(): WordEntity = WordEntity(
     level = level.name
 )
 
-/**
- * 从 Domain 模型转换为学习进度 Entity
- */
 fun Word.toProgressEntity(): UserWordProgressEntity = UserWordProgressEntity(
     wordId = id,
     masteryLevel = masteryLevel,

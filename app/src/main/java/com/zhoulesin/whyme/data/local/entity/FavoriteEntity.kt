@@ -16,17 +16,14 @@ import androidx.room.PrimaryKey
         )
     ],
     indices = [
-        Index(value = ["userId", "wordId"], unique = true),
-        Index(value = ["userId", "createdAt"])
+        Index(value = ["wordId"], unique = true),
+        Index(value = ["createdAt"])
     ]
 )
 data class FavoriteEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-
-    val userId: String = "",
     val wordId: Long,
-
     val createdAt: Long = System.currentTimeMillis(),
     val notes: String? = null
 )

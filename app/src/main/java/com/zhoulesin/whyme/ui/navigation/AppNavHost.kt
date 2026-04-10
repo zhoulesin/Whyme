@@ -33,12 +33,13 @@ fun AppNavHost(
     navController: NavHostController,
     paddingValues: PaddingValues,
     userManager: UserManager,
+    startDestination: String = Screen.Login.route,
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
     NavHost(
         navController = navController,
-        startDestination = Screen.Login.route,
+        startDestination = startDestination,
         modifier = modifier.padding(paddingValues)
     ) {
         composable(Screen.Login.route) {

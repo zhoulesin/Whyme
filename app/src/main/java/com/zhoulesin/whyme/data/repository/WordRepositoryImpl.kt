@@ -1,6 +1,5 @@
 package com.zhoulesin.whyme.data.repository
 
-import com.zhoulesin.whyme.data.datastore.CurrentUser
 import com.zhoulesin.whyme.data.local.dao.FavoriteDao
 import com.zhoulesin.whyme.data.local.dao.UserWordProgressDao
 import com.zhoulesin.whyme.data.local.dao.WordDao
@@ -29,18 +28,16 @@ class WordRepositoryImpl @Inject constructor(
     private val favoriteDao: FavoriteDao
 ) : WordRepository {
 
-    private fun uid(): String = CurrentUser.userId
-
     private suspend fun getFavoriteIds(): Set<Long> {
-        return favoriteDao.getFavoriteWordIds(uid()).first().toSet()
+        return favoriteDao.getFavoriteWordIds().first().toSet()
     }
 
     private suspend fun buildWordsWithState(wordEntities: List<com.zhoulesin.whyme.data.local.entity.WordEntity>): List<Word> {
         if (wordEntities.isEmpty()) return emptyList()
         val wordIds = wordEntities.map { it.id }
-        val progressList = userWordProgressDao.getProgressByWordIds(uid(), wordIds)
+        val progressList = userWordProgressDao.getProgressByWordIds(wordIds)
         val progressMap = progressList.associateBy { it.wordId }
-        val favoriteIds = favoriteDao.getFavoriteWordIdsIn(uid(), wordIds).toSet()
+        val favoriteIds = favoriteDao.getFavoriteWordIdsIn(wordIds).toSet()
         return wordEntities.map { entity ->
             entity.toDomain(
                 progress = progressMap[entity.id],
@@ -61,59 +58,59 @@ class WordRepositoryImpl @Inject constructor(
         combineWordData(wordDao.getAllWords())
 
     override fun getWordsForReview(limit: Int, level: WordLevel?): Flow<List<Word>> =
-        userWordProgressDao.getWordsForReview(uid(), LocalDate.now().toEpochDay(), limit, level?.name)
+        userWordProgressDao.getWordsForReview(LocalDate.now().toEpochDay(), limit, level?.name)
             .map { wordEntities ->
                 val favoriteIds = getFavoriteIds()
                 wordEntities.map { entity ->
-                    val progress = userWordProgressDao.getProgressByWordId(uid(), entity.id)
+                    val progress = userWordProgressDao.getProgressByWordId(entity.id)
                     entity.toDomain(progress, favoriteIds.contains(entity.id))
                 }
             }
 
     override fun getTodayNewWords(limit: Int, level: WordLevel?): Flow<List<Word>> =
-        userWordProgressDao.getLearningWords(uid(), limit, level?.name)
+        userWordProgressDao.getLearningWords(limit, level?.name)
             .map { wordEntities ->
                 val favoriteIds = getFavoriteIds()
                 wordEntities.map { entity ->
-                    val progress = userWordProgressDao.getProgressByWordId(uid(), entity.id)
+                    val progress = userWordProgressDao.getProgressByWordId(entity.id)
                     entity.toDomain(progress, favoriteIds.contains(entity.id))
                 }
             }
 
     override fun getTodayLearnedWords(): Flow<List<Word>> {
         val todayStart = LocalDate.now().atStartOfDay().toEpochSecond(java.time.ZoneOffset.systemDefault().rules.getOffset(java.time.Instant.now())) * 1000
-        return userWordProgressDao.getTodayLearnedWords(uid(), todayStart)
+        return userWordProgressDao.getTodayLearnedWords(todayStart)
             .map { wordEntities ->
                 val favoriteIds = getFavoriteIds()
                 wordEntities.map { entity ->
-                    val progress = userWordProgressDao.getProgressByWordId(uid(), entity.id)
+                    val progress = userWordProgressDao.getProgressByWordId(entity.id)
                     entity.toDomain(progress, favoriteIds.contains(entity.id))
                 }
             }
     }
 
     override fun getFavoriteWords(): Flow<List<Word>> =
-        favoriteDao.getFavoriteWords(uid())
+        favoriteDao.getFavoriteWords()
             .map { wordEntities ->
                 wordEntities.map { entity ->
-                    val progress = userWordProgressDao.getProgressByWordId(uid(), entity.id)
+                    val progress = userWordProgressDao.getProgressByWordId(entity.id)
                     entity.toDomain(progress, true)
                 }
             }
 
     override fun getNewWordsBook(): Flow<List<Word>> =
-        favoriteDao.getNewWordsBook(uid())
+        favoriteDao.getNewWordsBook()
             .map { wordEntities ->
                 wordEntities.map { entity ->
-                    val progress = userWordProgressDao.getProgressByWordId(uid(), entity.id)
+                    val progress = userWordProgressDao.getProgressByWordId(entity.id)
                     entity.toDomain(progress, true)
                 }
             }
 
     override suspend fun getWordById(id: Long): Word? {
         val entity = wordDao.getWordById(id) ?: return null
-        val progress = userWordProgressDao.getProgressByWordId(uid(), id)
-        val isFavorite = favoriteDao.isFavorite(uid(), id)
+        val progress = userWordProgressDao.getProgressByWordId(id)
+        val isFavorite = favoriteDao.isFavorite(id)
         return entity.toDomain(progress, isFavorite)
     }
 
@@ -121,11 +118,11 @@ class WordRepositoryImpl @Inject constructor(
         val wordId = wordDao.insertWord(word.toEntity())
         if (word.masteryLevel > 0 || word.isLearned) {
             userWordProgressDao.insertOrUpdateProgress(
-                word.copy(id = wordId).toProgressEntity().copy(userId = uid())
+                word.copy(id = wordId).toProgressEntity()
             )
         }
         if (word.isFavorite) {
-            favoriteDao.addFavorite(FavoriteEntity(userId = uid(), wordId = wordId))
+            favoriteDao.addFavorite(FavoriteEntity(wordId = wordId))
         }
         return wordId
     }
@@ -136,7 +133,7 @@ class WordRepositoryImpl @Inject constructor(
 
     override suspend fun updateWord(word: Word) {
         wordDao.updateWord(word.toEntity())
-        userWordProgressDao.insertOrUpdateProgress(word.toProgressEntity().copy(userId = uid()))
+        userWordProgressDao.insertOrUpdateProgress(word.toProgressEntity())
     }
 
     override suspend fun deleteWord(word: Word) {
@@ -153,11 +150,10 @@ class WordRepositoryImpl @Inject constructor(
         val timestamp = System.currentTimeMillis()
         val isCorrect = reviewResult == ReviewResult.GOOD || reviewResult == ReviewResult.EASY
 
-        val existingProgress = userWordProgressDao.getProgressByWordId(uid(), wordId)
+        val existingProgress = userWordProgressDao.getProgressByWordId(wordId)
         if (existingProgress == null) {
             userWordProgressDao.insertOrUpdateProgress(
                 UserWordProgressEntity(
-                    userId = uid(),
                     wordId = wordId,
                     masteryLevel = masteryLevel,
                     isLearned = isLearned,
@@ -172,7 +168,6 @@ class WordRepositoryImpl @Inject constructor(
             )
         } else {
             userWordProgressDao.updateReview(
-                userId = uid(),
                 wordId = wordId,
                 level = masteryLevel,
                 nextReviewDate = nextReviewDate.toEpochDay(),
@@ -185,32 +180,32 @@ class WordRepositoryImpl @Inject constructor(
     }
 
     override suspend fun toggleFavorite(wordId: Long): Boolean {
-        return favoriteDao.toggleFavorite(uid(), wordId)
+        return favoriteDao.toggleFavorite(wordId)
     }
 
     override suspend fun getWordCount(): Int =
         wordDao.getWordCount()
 
     override suspend fun getMasteredWordCount(): Int =
-        userWordProgressDao.getMasteredWordCount(uid())
+        userWordProgressDao.getMasteredWordCount()
 
     override suspend fun getLearningWordCount(): Int =
-        userWordProgressDao.getLearningWordCount(uid())
+        userWordProgressDao.getLearningWordCount()
 
     override suspend fun getUnknownWordCount(): Int {
         val total = wordDao.getWordCount()
-        val learned = userWordProgressDao.getMasteredWordCount(uid()) + userWordProgressDao.getLearningWordCount(uid())
+        val learned = userWordProgressDao.getMasteredWordCount() + userWordProgressDao.getLearningWordCount()
         return total - learned
     }
 
     override suspend fun getTodayNewWordsCount(): Int {
         val todayStart = LocalDate.now().atStartOfDay().toEpochSecond(java.time.ZoneOffset.systemDefault().rules.getOffset(java.time.Instant.now())) * 1000
-        return userWordProgressDao.getTodayNewWordsCount(uid(), todayStart)
+        return userWordProgressDao.getTodayNewWordsCount(todayStart)
     }
 
     override suspend fun getTodayReviewCount(): Int {
         val todayStart = LocalDate.now().atStartOfDay().toEpochSecond(java.time.ZoneOffset.systemDefault().rules.getOffset(java.time.Instant.now())) * 1000
-        return userWordProgressDao.getTodayReviewCount(uid(), todayStart)
+        return userWordProgressDao.getTodayReviewCount(todayStart)
     }
 
     override fun searchWords(query: String): Flow<List<Word>> =
@@ -222,12 +217,12 @@ class WordRepositoryImpl @Inject constructor(
         combineWordData(wordDao.getWordsByBank(wordBank))
 
     override fun getWordsNeedingReview(): Flow<List<Word>> {
-        return userWordProgressDao.getAllProgress(uid())
+        return userWordProgressDao.getAllProgress()
             .map { progressList ->
                 progressList.filter { it.masteryLevel in 1..3 }
                     .mapNotNull { progress ->
                         wordDao.getWordById(progress.wordId)?.let { entity ->
-                            val isFavorite = favoriteDao.isFavorite(uid(), entity.id)
+                            val isFavorite = favoriteDao.isFavorite(entity.id)
                             entity.toDomain(progress, isFavorite)
                         }
                     }
@@ -235,11 +230,11 @@ class WordRepositoryImpl @Inject constructor(
     }
 
     override fun getAllLearnedWords(): Flow<List<Word>> {
-        return userWordProgressDao.getLearnedWords(uid())
+        return userWordProgressDao.getLearnedWords()
             .map { wordEntities ->
                 wordEntities.mapNotNull { wordEntity ->
-                    val progress = userWordProgressDao.getProgressByWordId(uid(), wordEntity.id)
-                    val isFavorite = favoriteDao.isFavorite(uid(), wordEntity.id)
+                    val progress = userWordProgressDao.getProgressByWordId(wordEntity.id)
+                    val isFavorite = favoriteDao.isFavorite(wordEntity.id)
                     wordEntity.toDomain(progress, isFavorite)
                 }
             }

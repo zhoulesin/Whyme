@@ -44,7 +44,7 @@ fun LoginScreen(
     ) {
         // Logo 和标题
         Text(
-            text = "WhyMe English",
+            text = "Whyme",
             style = MaterialTheme.typography.displayLarge,
             color = BrandIndigo,
             modifier = Modifier.padding(bottom = 48.dp)

@@ -21,6 +21,7 @@ import com.zhoulesin.whyme.domain.model.ReviewResult
 import com.zhoulesin.whyme.ui.components.MasteryButtons
 import com.zhoulesin.whyme.ui.components.WordCard
 import com.zhoulesin.whyme.ui.theme.AccentViolet
+import com.zhoulesin.whyme.ui.theme.CompactTopBar
 import com.zhoulesin.whyme.ui.theme.Level3Surface
 import com.zhoulesin.whyme.ui.theme.MarketingBlack
 import com.zhoulesin.whyme.ui.theme.PrimaryText
@@ -138,20 +139,18 @@ fun LearningSessionScreen(
     Scaffold(
         containerColor = MarketingBlack,
         topBar = {
-            TopAppBar(
-                title = { Text(title, color = PrimaryText) },
+            CompactTopBar(
+                title = title,
                 navigationIcon = {
                     IconButton(onClick = { showExitDialog = true }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "退出学习",
-                            tint = TertiaryText
+                            tint = TertiaryText,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Level3Surface
-                )
+                }
             )
         }
     ) { paddingValues ->

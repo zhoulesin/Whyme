@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.zhoulesin.whyme.data.local.UserDatabaseManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -31,6 +32,12 @@ class UserManager private constructor(private val context: Context) {
                 }
             }
         }
+    }
+
+    private var userDatabaseManager: UserDatabaseManager? = null
+
+    fun setUserDatabaseManager(manager: UserDatabaseManager) {
+        userDatabaseManager = manager
     }
 
     val isLoggedIn: Flow<Boolean> = context.userDataStore.data
@@ -58,6 +65,7 @@ class UserManager private constructor(private val context: Context) {
         }
 
         CurrentUser.set(memberUid, account)
+        userDatabaseManager?.switchUser(memberUid)
 
         return true
     }
@@ -70,6 +78,7 @@ class UserManager private constructor(private val context: Context) {
         }
 
         CurrentUser.clear()
+        userDatabaseManager?.closeDatabase()
     }
 
     suspend fun restoreLoginState() {
@@ -79,6 +88,7 @@ class UserManager private constructor(private val context: Context) {
             val uid = prefs[MEMBER_UID] ?: ""
             val account = prefs[USER_ACCOUNT] ?: ""
             CurrentUser.set(uid, account)
+            userDatabaseManager?.switchUser(uid)
         }
     }
 

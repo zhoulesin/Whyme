@@ -6,14 +6,12 @@ import com.zhoulesin.whyme.domain.model.LevelProgress
 import com.zhoulesin.whyme.domain.model.UserWordBankSettings
 import com.zhoulesin.whyme.domain.model.WordLevel
 import com.zhoulesin.whyme.domain.repository.WordBankRepository
+import com.zhoulesin.whyme.domain.repository.WordRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * 词库级别 UI 状态
- */
 data class WordBankUiState(
     val settings: UserWordBankSettings = UserWordBankSettings(),
     val currentLevel: WordLevel = WordLevel.DEFAULT,
@@ -22,22 +20,20 @@ data class WordBankUiState(
     val isLoading: Boolean = true
 )
 
-/**
- * 词库级别 ViewModel
- */
 @HiltViewModel
 class WordBankViewModel @Inject constructor(
-    private val wordBankRepository: WordBankRepository
+    private val wordBankRepository: WordBankRepository,
+    private val wordRepository: WordRepository
 ) : ViewModel() {
-    
+
     private val _uiState = MutableStateFlow(WordBankUiState())
     val uiState: StateFlow<WordBankUiState> = _uiState.asStateFlow()
-    
+
     init {
         loadWordBankSettings()
-        observeLevelProgress()
+        loadLevelProgress()
     }
-    
+
     private fun loadWordBankSettings() {
         viewModelScope.launch {
             combine(
@@ -58,44 +54,41 @@ class WordBankViewModel @Inject constructor(
             }
         }
     }
-    
-    private fun observeLevelProgress() {
+
+    private fun loadLevelProgress() {
         viewModelScope.launch {
-            wordBankRepository.getAllLevelProgress().collect { progressList ->
-                val progressMap = progressList.associateBy { it.level }
-                _uiState.update { it.copy(levelProgressMap = progressMap) }
+            val progressMap = mutableMapOf<WordLevel, LevelProgress>()
+            for (level in WordLevel.entries) {
+                val total = wordRepository.getWordCount()
+                val mastered = wordRepository.getMasteredWordCount()
+                val learned = wordRepository.getLearningWordCount()
+                progressMap[level] = LevelProgress(
+                    level = level,
+                    totalWords = total,
+                    learnedWords = learned,
+                    masteredWords = mastered
+                )
             }
+            _uiState.update { it.copy(levelProgressMap = progressMap) }
         }
     }
-    
-    /**
-     * 切换当前学习级别
-     */
+
     fun setCurrentLevel(level: WordLevel) {
         viewModelScope.launch {
             wordBankRepository.setCurrentLevel(level)
         }
     }
-    
-    /**
-     * 启用/禁用某个级别
-     */
+
     fun setLevelEnabled(level: WordLevel, enabled: Boolean) {
         viewModelScope.launch {
             wordBankRepository.setLevelEnabled(level, enabled)
         }
     }
-    
-    /**
-     * 获取当前级别的进度
-     */
+
     fun getCurrentLevelProgress(): LevelProgress? {
         return _uiState.value.levelProgressMap[_uiState.value.currentLevel]
     }
-    
-    /**
-     * 获取指定级别的进度
-     */
+
     fun getLevelProgress(level: WordLevel): LevelProgress? {
         return _uiState.value.levelProgressMap[level]
     }

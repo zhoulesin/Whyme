@@ -33,20 +33,18 @@ fun FavoritesScreen(
     Scaffold(
         containerColor = MarketingBlack,
         topBar = {
-            TopAppBar(
-                title = { Text("我的收藏", color = PrimaryText) },
+            CompactTopBar(
+                title = "我的收藏",
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "返回",
-                            tint = TertiaryText
+                            tint = TertiaryText,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Level3Surface
-                )
+                }
             )
         }
     ) { paddingValues ->

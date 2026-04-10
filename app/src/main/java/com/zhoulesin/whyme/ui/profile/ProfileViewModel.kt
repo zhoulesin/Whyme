@@ -6,7 +6,6 @@ import com.zhoulesin.whyme.domain.model.Achievement
 import com.zhoulesin.whyme.domain.model.Achievements
 import com.zhoulesin.whyme.domain.model.DailyGoal
 import com.zhoulesin.whyme.domain.model.UserStats
-import com.zhoulesin.whyme.domain.repository.LearningRepository
 import com.zhoulesin.whyme.domain.repository.WordRepository
 import com.zhoulesin.whyme.domain.usecase.GetDailyGoalUseCase
 import com.zhoulesin.whyme.domain.usecase.GetUserStatsUseCase

@@ -40,8 +40,8 @@ fun QuizScreen(
     Scaffold(
         containerColor = MarketingBlack,
         topBar = {
-            TopAppBar(
-                title = { Text("单词测试", color = PrimaryText) },
+            CompactTopBar(
+                title = "单词测试",
                 navigationIcon = {
                     IconButton(onClick = {
                         viewModel.exitSession()
@@ -50,13 +50,11 @@ fun QuizScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "返回",
-                            tint = TertiaryText
+                            tint = TertiaryText,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Level3Surface
-                )
+                }
             )
         }
     ) { paddingValues ->

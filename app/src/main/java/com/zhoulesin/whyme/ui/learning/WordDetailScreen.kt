@@ -30,14 +30,15 @@ fun WordDetailScreen(
     Scaffold(
         containerColor = MarketingBlack,
         topBar = {
-            TopAppBar(
-                title = { Text("单词详情", color = PrimaryText) },
+            CompactTopBar(
+                title = "单词详情",
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "返回",
-                            tint = TertiaryText
+                            tint = TertiaryText,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 },
@@ -47,14 +48,12 @@ fun WordDetailScreen(
                             Icon(
                                 imageVector = if (word.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                                 contentDescription = "收藏",
-                                tint = if (word.isFavorite) Error else TertiaryText
+                                tint = if (word.isFavorite) Error else TertiaryText,
+                                modifier = Modifier.size(20.dp)
                             )
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Level3Surface
-                )
+                }
             )
         }
     ) { paddingValues ->
