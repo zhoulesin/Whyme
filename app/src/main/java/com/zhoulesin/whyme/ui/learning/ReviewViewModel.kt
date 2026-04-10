@@ -21,7 +21,6 @@ class ReviewViewModel @Inject constructor(
     private val getWordsForReviewUseCase: GetWordsForReviewUseCase,
     private val updateWordReviewUseCase: UpdateWordReviewUseCase,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
-    private val recordLearningSessionUseCase: RecordLearningSessionUseCase,
     private val wordBankRepository: WordBankRepository
 ) : ViewModel() {
 
@@ -118,19 +117,8 @@ class ReviewViewModel @Inject constructor(
 
                     val nextIndex = currentState.index + 1
                     if (nextIndex >= currentState.total) {
-                        // 复习完成 - 先记录会话，再更新状态
-                        val durationSeconds = (System.currentTimeMillis() - state.sessionStats.startTime) / 1000
+                        // 复习完成
                         val finalStats = newStats
-
-                        // 同步记录会话
-                        kotlinx.coroutines.runBlocking {
-                            recordLearningSessionUseCase(
-                                wordsLearned = 0,
-                                wordsReviewed = finalStats.wordsReviewed,
-                                correctCount = finalStats.correctCount,
-                                durationSeconds = durationSeconds
-                            )
-                        }
 
                         state.copy(
                             reviewState = ReviewState.Completed(

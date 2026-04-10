@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhoulesin.whyme.domain.model.*
 import com.zhoulesin.whyme.domain.usecase.GetFavoriteWordsUseCase
-import com.zhoulesin.whyme.domain.usecase.RecordLearningSessionUseCase
 import com.zhoulesin.whyme.domain.repository.WordRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,8 +19,7 @@ import javax.inject.Inject
 @HiltViewModel
 class QuizViewModel @Inject constructor(
     private val wordRepository: WordRepository,
-    private val getFavoriteWordsUseCase: GetFavoriteWordsUseCase,
-    private val recordLearningSessionUseCase: RecordLearningSessionUseCase
+    private val getFavoriteWordsUseCase: GetFavoriteWordsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(QuizUiState())
@@ -159,18 +157,22 @@ class QuizViewModel @Inject constructor(
 
                 val nextIndex = currentQuizState.index + 1
                 if (nextIndex >= quizWordPool.size) {
-                    // 测试完成 - 先记录会话
+                    // 测试完成 - 记录测试记录
                     val durationSeconds = (System.currentTimeMillis() - state.sessionStats.startTime) / 1000
                     val finalStats = newStats
                     val accuracy = finalStats.correctCount.toFloat() / quizWordPool.size
 
-                    // 同步记录会话
+                    // 同步记录测试记录
                     kotlinx.coroutines.runBlocking {
-                        recordLearningSessionUseCase(
-                            wordsLearned = 0, // 测试不计入新词学习
-                            wordsReviewed = 0, // 测试不计入复习数量
+                        // 记录测试记录
+                        wordRepository.recordTest(
+                            testType = currentQuizState.questionType.name,
+                            totalQuestions = quizWordPool.size,
                             correctCount = finalStats.correctCount,
-                            durationSeconds = durationSeconds
+                            accuracy = accuracy,
+                            durationSeconds = durationSeconds.toInt(),
+                            questionCount = quizWordPool.size,
+                            source = currentQuizState.questionType.name // 使用测试类型作为来源
                         )
                     }
 
