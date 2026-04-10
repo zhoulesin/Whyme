@@ -30,6 +30,9 @@ data class UserStats(
     val totalLearningMinutes: Long,
     val todayWordsLearned: Int,
     val todayWordsReviewed: Int,
+    val todayTests: Int,
+    val todayTestAccuracy: Float,
+    val todayLearningMinutes: Int,
     val todayAccuracy: Float
 )
 

@@ -1,5 +1,6 @@
 package com.zhoulesin.whyme.ui.learning
 
+import QuizState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -66,8 +67,8 @@ fun QuizScreen(
                 .background(MarketingBlack),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            when (val state = uiState.learningState) {
-                is LearningState.Idle -> {
+            when (val state = uiState.quizState) {
+                is QuizState.Idle -> {
                     // 开始测试
                     QuizStartContent(
                         wordCount = uiState.allLearnedWords.size,
@@ -75,7 +76,7 @@ fun QuizScreen(
                     )
                 }
 
-                is LearningState.Testing -> {
+                is QuizState.Testing -> {
                     // 测试进行中
                     QuizQuestionContent(
                         state = state,
@@ -86,7 +87,7 @@ fun QuizScreen(
                     )
                 }
 
-                is LearningState.QuizResult -> {
+                is QuizState.Result -> {
                     // 测试完成
                     QuizResultContent(
                         correctCount = state.correctCount,
@@ -207,7 +208,7 @@ private fun QuizStartContent(
 
 @Composable
 private fun QuizQuestionContent(
-    state: LearningState.Testing,
+    state: QuizState.Testing,
     selectedAnswer: String?,
     isAnswerRevealed: Boolean,
     onSelectAnswer: (String) -> Unit,

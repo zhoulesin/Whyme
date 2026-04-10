@@ -107,6 +107,11 @@ interface WordRepository {
     suspend fun getLearningWordCount(): Int
 
     /**
+     * 获取总学习单词数 (learnedAt 不为空)
+     */
+    suspend fun getTotalLearnedWordCount(): Int
+
+    /**
      * 获取陌生单词数 (masteryLevel = 0)
      */
     suspend fun getUnknownWordCount(): Int
@@ -120,6 +125,26 @@ interface WordRepository {
      * 获取今日复习数量
      */
     suspend fun getTodayReviewCount(): Int
+
+    /**
+     * 获取总复习次数
+     */
+    suspend fun getTotalReviewCount(): Int
+
+    /**
+     * 获取今日测试次数
+     */
+    suspend fun getTodayTestCount(): Int
+
+    /**
+     * 获取今日测试正确率
+     */
+    suspend fun getTodayTestAccuracy(): Float
+
+    /**
+     * 获取今日学习时长（分钟）
+     */
+    suspend fun getTodayLearningMinutes(): Int
 
     /**
      * 搜索单词

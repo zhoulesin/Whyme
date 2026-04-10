@@ -201,15 +201,15 @@ class WordRepositoryImpl @Inject constructor(
     override suspend fun getWordCount(): Int =
         wordDao.getWordCount()
 
-    override suspend fun getMasteredWordCount(): Int =
-        userWordProgressDao.getMasteredWordCount()
+    override suspend fun getMasteredWordCount(): Int = userWordProgressDao.getMasteredWordCount()
 
-    override suspend fun getLearningWordCount(): Int =
-        userWordProgressDao.getLearningWordCount()
+    override suspend fun getLearningWordCount(): Int = userWordProgressDao.getLearningWordCount()
+
+    override suspend fun getTotalLearnedWordCount(): Int = userWordProgressDao.getTotalLearnedWordCount()
 
     override suspend fun getUnknownWordCount(): Int {
         val total = wordDao.getWordCount()
-        val learned = userWordProgressDao.getMasteredWordCount() + userWordProgressDao.getLearningWordCount()
+        val learned = userWordProgressDao.getTotalLearnedWordCount()
         return total - learned
     }
 
@@ -220,7 +220,30 @@ class WordRepositoryImpl @Inject constructor(
 
     override suspend fun getTodayReviewCount(): Int {
         val todayStart = LocalDate.now().atStartOfDay().toEpochSecond(java.time.ZoneOffset.systemDefault().rules.getOffset(java.time.Instant.now())) * 1000
-        return userWordProgressDao.getTodayReviewCount(todayStart)
+        val todayEnd = todayStart + 24 * 60 * 60 * 1000 - 1
+        return reviewRecordDao.getReviewCountByDateRange(todayStart, todayEnd)
+    }
+
+    override suspend fun getTotalReviewCount(): Int {
+        return reviewRecordDao.getTotalReviewCount()
+    }
+
+    override suspend fun getTodayTestCount(): Int {
+        val todayStart = LocalDate.now().atStartOfDay().toEpochSecond(java.time.ZoneOffset.systemDefault().rules.getOffset(java.time.Instant.now())) * 1000
+        val todayEnd = todayStart + 24 * 60 * 60 * 1000 - 1
+        return testRecordDao.getTestCountByDateRange(todayStart, todayEnd)
+    }
+
+    override suspend fun getTodayTestAccuracy(): Float {
+        val todayStart = LocalDate.now().atStartOfDay().toEpochSecond(java.time.ZoneOffset.systemDefault().rules.getOffset(java.time.Instant.now())) * 1000
+        val todayEnd = todayStart + 24 * 60 * 60 * 1000 - 1
+        return testRecordDao.getAverageAccuracyByDateRange(todayStart, todayEnd)
+    }
+
+    override suspend fun getTodayLearningMinutes(): Int {
+        val todayStart = LocalDate.now().atStartOfDay().toEpochSecond(java.time.ZoneOffset.systemDefault().rules.getOffset(java.time.Instant.now())) * 1000
+        val todayEnd = todayStart + 24 * 60 * 60 * 1000 - 1
+        return dailyLearningRecordDao.getTotalLearningMinutesInRange(todayStart, todayEnd)
     }
 
     override fun searchWords(query: String): Flow<List<Word>> =

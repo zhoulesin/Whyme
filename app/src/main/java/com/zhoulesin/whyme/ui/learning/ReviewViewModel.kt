@@ -9,10 +9,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 import javax.inject.Inject
 
 /**
@@ -27,8 +25,8 @@ class ReviewViewModel @Inject constructor(
     private val wordBankRepository: WordBankRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(LearningUiState())
-    val uiState: StateFlow<LearningUiState> = _uiState
+    private val _uiState = MutableStateFlow(ReviewUiState())
+    val uiState: StateFlow<ReviewUiState> = _uiState
 
     private var currentLevel: WordLevel? = null
 
@@ -65,7 +63,7 @@ class ReviewViewModel @Inject constructor(
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
-                        learningState = LearningState.Error("加载复习单词失败: ${e.message}"),
+                        reviewState = ReviewState.Error("加载复习单词失败: ${e.message}"),
                         isDataLoaded = true
                     )
                 }
@@ -81,7 +79,7 @@ class ReviewViewModel @Inject constructor(
         if (words.isEmpty()) {
             _uiState.update {
                 it.copy(
-                    learningState = LearningState.Error("没有待复习的单词")
+                    reviewState = ReviewState.Error("没有待复习的单词")
                 )
             }
             return
@@ -89,11 +87,10 @@ class ReviewViewModel @Inject constructor(
 
         _uiState.update {
             it.copy(
-                learningState = LearningState.Learning(
+                reviewState = ReviewState.Reviewing(
                     currentWord = words[0],
                     index = 0,
-                    total = words.size,
-                    mode = LearningMode.REVIEW
+                    total = words.size
                 ),
                 sessionStats = SessionStats(
                     startTime = System.currentTimeMillis()
@@ -107,11 +104,9 @@ class ReviewViewModel @Inject constructor(
      */
     fun markWord(result: ReviewResult) {
         viewModelScope.launch {
-            val currentState = _uiState.value.learningState
-            if (currentState is LearningState.Learning) {
+            val currentState = _uiState.value.reviewState
+            if (currentState is ReviewState.Reviewing) {
                 updateWordReviewUseCase(currentState.currentWord.id, result)
-
-                val isReview = currentState.mode == LearningMode.REVIEW
 
                 _uiState.update { state ->
                     val newStats = state.sessionStats.copy(
@@ -138,9 +133,9 @@ class ReviewViewModel @Inject constructor(
                         }
 
                         state.copy(
-                            learningState = LearningState.Completed(
-                                learned = 0,
+                            reviewState = ReviewState.Completed(
                                 reviewed = finalStats.wordsReviewed,
+                                correct = finalStats.correctCount,
                                 accuracy = if (finalStats.wordsReviewed > 0) {
                                     finalStats.correctCount.toFloat() / finalStats.wordsReviewed
                                 } else 0f
@@ -152,7 +147,7 @@ class ReviewViewModel @Inject constructor(
                         // 下一个单词
                         val nextWord = state.wordsForReview.getOrNull(nextIndex) ?: currentState.currentWord
                         state.copy(
-                            learningState = currentState.copy(
+                            reviewState = currentState.copy(
                                 currentWord = nextWord,
                                 index = nextIndex
                             ),
@@ -184,9 +179,9 @@ class ReviewViewModel @Inject constructor(
 
             // 手动更新 UI 状态中对应单词的收藏状态
             _uiState.update { state ->
-                // 查找要更新的单词，优先从当前学习状态中查找
-                val updatedWord = when (val currentState = state.learningState) {
-                    is LearningState.Learning -> {
+                // 查找要更新的单词，优先从当前复习状态中查找
+                val updatedWord = when (val currentState = state.reviewState) {
+                    is ReviewState.Reviewing -> {
                         if (currentState.currentWord.id == wordId) {
                             currentState.currentWord
                         } else {
@@ -204,9 +199,9 @@ class ReviewViewModel @Inject constructor(
                     wordsForReview = state.wordsForReview.map {
                         if (it.id == wordId) it.copy(isFavorite = isFavorite) else it
                     },
-                    // 同时更新 learningState 中的 currentWord
-                    learningState = when (val currentState = state.learningState) {
-                        is LearningState.Learning -> {
+                    // 同时更新 reviewState 中的 currentWord
+                    reviewState = when (val currentState = state.reviewState) {
+                        is ReviewState.Reviewing -> {
                             if (currentState.currentWord.id == wordId && newWordWithFavorite != null) {
                                 currentState.copy(currentWord = newWordWithFavorite)
                             } else {
@@ -226,7 +221,7 @@ class ReviewViewModel @Inject constructor(
     fun exitSession() {
         _uiState.update {
             it.copy(
-                learningState = LearningState.Idle,
+                reviewState = ReviewState.Idle,
                 isFlipped = false,
                 sessionStats = SessionStats()
             )

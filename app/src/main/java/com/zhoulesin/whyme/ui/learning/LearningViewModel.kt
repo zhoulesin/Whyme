@@ -1,5 +1,7 @@
 package com.zhoulesin.whyme.ui.learning
 
+import QuizState
+import ReviewState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhoulesin.whyme.domain.model.*
@@ -10,6 +12,16 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+/**
+ * 测试来源枚举
+ */
+enum class QuizSource {
+    TODAY_LEARNED,  // 今日学习的单词
+    ALL_LEARNED,    // 所有已学的单词
+    FAVORITES,      // 收藏的单词
+    ALL             // 所有单词
+}
 
 /**
  * 学习界面 UI 状态
@@ -27,17 +39,48 @@ data class LearningUiState(
     val learningState: LearningState = LearningState.Idle,
     val sessionStats: SessionStats = SessionStats(),
 
-    // 测试状态
-    val currentQuizOptions: List<QuizOption> = emptyList(),
-    val selectedAnswer: String? = null,
-    val isAnswerRevealed: Boolean = false,
-    val quizStartTime: Long = 0,
-
     // 统计数据
     val masteredCount: Int = 0,
     val learningCount: Int = 0,
     val unknownCount: Int = 0,
     
+    // 数据加载状态
+    val isDataLoaded: Boolean = false,
+    val currentLevel: WordLevel? = null
+)
+
+/**
+ * 复习界面 UI 状态
+ */
+data class ReviewUiState(
+    // 单词数据
+    val wordsForReview: List<Word> = emptyList(),
+
+    // 复习状态
+    val isFlipped: Boolean = false,
+    val reviewState: ReviewState = ReviewState.Idle,
+    val sessionStats: SessionStats = SessionStats(),
+
+    // 数据加载状态
+    val isDataLoaded: Boolean = false,
+    val currentLevel: WordLevel? = null
+)
+
+/**
+ * 测试界面 UI 状态
+ */
+data class QuizUiState(
+    // 单词数据
+    val allLearnedWords: List<Word> = emptyList(),
+    val favoriteWords: List<Word> = emptyList(),
+
+    // 测试状态
+    val quizState: QuizState = QuizState.Idle,
+    val selectedAnswer: String? = null,
+    val isAnswerRevealed: Boolean = false,
+    val quizStartTime: Long = 0,
+    val sessionStats: SessionStats = SessionStats(),
+
     // 数据加载状态
     val isDataLoaded: Boolean = false,
     val currentLevel: WordLevel? = null
@@ -63,13 +106,6 @@ data class QuizConfig(
     val source: QuizSource = QuizSource.ALL
 )
 
-enum class QuizSource {
-    TODAY_LEARNED,    // 今日学习
-    ALL_LEARNED,      // 全部已学
-    FAVORITES,        // 生词本
-    ALL               // 全部
-}
-
 @HiltViewModel
 class LearningViewModel @Inject constructor(
     private val getWordsForLearningUseCase: GetWordsForLearningUseCase,
@@ -84,9 +120,6 @@ class LearningViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(LearningUiState())
     val uiState: StateFlow<LearningUiState> = _uiState.asStateFlow()
-
-    // 测验使用的单词池
-    private var quizWordPool: List<Word> = emptyList()
 
     // 当前学习的级别
     private var currentLevel: WordLevel? = null
@@ -150,9 +183,7 @@ class LearningViewModel @Inject constructor(
             state.copy(
                 learningState = LearningState.Idle,
                 isFlipped = false,
-                sessionStats = SessionStats(),
-                selectedAnswer = null,
-                isAnswerRevealed = false
+                sessionStats = SessionStats()
             )
         }
     }
@@ -177,24 +208,6 @@ class LearningViewModel @Inject constructor(
         }
     }
 
-    fun startReview() {
-        val words = _uiState.value.wordsForReview
-        if (words.isNotEmpty()) {
-            _uiState.update { state ->
-                state.copy(
-                    learningState = LearningState.Learning(
-                        currentWord = words.first(),
-                        index = 0,
-                        total = words.size,
-                        mode = LearningMode.REVIEW
-                    ),
-                    sessionStats = SessionStats(),
-                    isFlipped = false
-                )
-            }
-        }
-    }
-
     fun flipCard() {
         _uiState.update { it.copy(isFlipped = !it.isFlipped) }
     }
@@ -202,6 +215,8 @@ class LearningViewModel @Inject constructor(
     fun markWord(result: ReviewResult) {
         viewModelScope.launch {
             val currentState = _uiState.value.learningState
+            
+            // 处理学习模式
             if (currentState is LearningState.Learning) {
                 val word = currentState.currentWord
                 val masteryLevel = when (result) {
@@ -216,24 +231,14 @@ class LearningViewModel @Inject constructor(
                 // 更新单词复习信息
                 updateWordReviewUseCase(word.id, result)
                 
+                val isNewWord = currentState.mode == LearningMode.NEW_WORD
+                
                 // 记录学习记录
                 wordRepository.recordWordLearning(word.id, word.level.name, masteryLevel)
                 
-                // 记录复习记录
-                wordRepository.recordWordReview(
-                    wordId = word.id,
-                    level = word.level.name,
-                    masteryLevel = masteryLevel,
-                    isCorrect = isCorrect,
-                    reviewResult = result.name,
-                    durationSeconds = durationSeconds.toInt()
-                )
-
-                val isNewWord = currentState.mode == LearningMode.NEW_WORD
-
                 _uiState.update { state ->
                     val newStats = state.sessionStats.copy(
-                        wordsReviewed = state.sessionStats.wordsReviewed + 1,
+                        wordsReviewed = if (isNewWord) state.sessionStats.wordsReviewed else state.sessionStats.wordsReviewed + 1,
                         wordsLearned = if (isNewWord) state.sessionStats.wordsLearned + 1 else state.sessionStats.wordsLearned,
                         correctCount = if (result == ReviewResult.GOOD || result == ReviewResult.EASY) {
                             state.sessionStats.correctCount + 1
@@ -250,7 +255,7 @@ class LearningViewModel @Inject constructor(
                         kotlinx.coroutines.runBlocking {
                             recordLearningSessionUseCase(
                                 wordsLearned = finalStats.wordsLearned,
-                                wordsReviewed = finalStats.wordsReviewed,
+                                wordsReviewed = if (isNewWord) 0 else finalStats.wordsReviewed,
                                 correctCount = finalStats.correctCount,
                                 durationSeconds = totalDurationSeconds
                             )
@@ -263,7 +268,7 @@ class LearningViewModel @Inject constructor(
                             wordRepository.recordDailyLearning(
                                 date = todayStart,
                                 wordsLearned = finalStats.wordsLearned,
-                                wordsReviewed = finalStats.wordsReviewed,
+                                wordsReviewed = if (isNewWord) 0 else finalStats.wordsReviewed,
                                 correctCount = finalStats.correctCount,
                                 totalQuestions = finalStats.wordsReviewed,
                                 durationMinutes = (totalDurationSeconds / 60).toInt(),
@@ -275,17 +280,14 @@ class LearningViewModel @Inject constructor(
                                 date = todayStart,
                                 learningMinutes = (totalDurationSeconds / 60).toInt(),
                                 wordsLearned = finalStats.wordsLearned,
-                                wordsReviewed = finalStats.wordsReviewed
+                                wordsReviewed = if (isNewWord) 0 else finalStats.wordsReviewed
                             )
                         }
 
                         state.copy(
                             learningState = LearningState.Completed(
                                 learned = if (isNewWord) finalStats.wordsLearned else 0,
-                                reviewed = finalStats.wordsReviewed,
-                                accuracy = if (finalStats.wordsReviewed > 0) {
-                                    finalStats.correctCount.toFloat() / finalStats.wordsReviewed
-                                } else 0f
+                                reviewed = if (isNewWord) 0 else finalStats.wordsReviewed
                             ),
                             sessionStats = finalStats,
                             isFlipped = false
@@ -308,181 +310,6 @@ class LearningViewModel @Inject constructor(
                             isFlipped = false
                         )
                     }
-                }
-            }
-        }
-    }
-
-    // ==================== 测试模式 ====================
-
-    /**
-     * 开始测试
-     * @param config 测试配置
-     */
-    fun startQuiz(config: QuizConfig = QuizConfig()) {
-        // 根据配置选择单词池
-        quizWordPool = when (config.source) {
-            QuizSource.TODAY_LEARNED -> _uiState.value.allLearnedWords
-            QuizSource.ALL_LEARNED -> _uiState.value.allLearnedWords
-            QuizSource.FAVORITES -> _uiState.value.favoriteWords
-            QuizSource.ALL -> _uiState.value.allLearnedWords
-        }.shuffled().take(config.questionCount)
-
-        if (quizWordPool.isNotEmpty()) {
-            val firstWord = quizWordPool.first()
-            _uiState.update { state ->
-                state.copy(
-                    learningState = LearningState.Testing(
-                        currentWord = firstWord,
-                        questionType = config.questionType,
-                        index = 0,
-                        total = quizWordPool.size,
-                        options = generateQuizOptions(firstWord, config.questionType)
-                    ),
-                    sessionStats = SessionStats(totalQuestions = quizWordPool.size),
-                    quizStartTime = System.currentTimeMillis(),
-                    selectedAnswer = null,
-                    isAnswerRevealed = false
-                )
-            }
-        }
-    }
-
-    /**
-     * 生成测试选项
-     */
-    private fun generateQuizOptions(word: Word, questionType: QuestionType): List<QuizOption> {
-        // 从所有单词中获取干扰选项
-        val allTranslations = _uiState.value.allLearnedWords
-            .map { it.translation }
-            .filter { it != word.translation }
-            .distinct()
-            .shuffled()
-            .take(3)
-
-        val correctAnswer = when (questionType) {
-            QuestionType.WORD_TO_CHINESE -> word.translation
-            QuestionType.CHINESE_TO_WORD -> word.word
-            QuestionType.SPELLING -> "" // 拼写题不需要选项
-        }
-
-        val options = if (questionType == QuestionType.SPELLING) {
-            emptyList()
-        } else {
-            val correct = QuizOption(correctAnswer, true)
-            val distractors = allTranslations.map { QuizOption(it, false) }
-            (listOf(correct) + distractors).shuffled()
-        }
-
-        return options
-    }
-
-    /**
-     * 选择答案
-     */
-    fun selectAnswer(answer: String) {
-        val currentState = _uiState.value.learningState
-        if (currentState is LearningState.Testing && !_uiState.value.isAnswerRevealed) {
-            _uiState.update { it.copy(selectedAnswer = answer, isAnswerRevealed = true) }
-        }
-    }
-
-    /**
-     * 下一题
-     */
-    fun nextQuestion() {
-        val currentState = _uiState.value.learningState
-        if (currentState is LearningState.Testing) {
-            val isCorrect = _uiState.value.selectedAnswer == when (currentState.questionType) {
-                QuestionType.WORD_TO_CHINESE -> currentState.currentWord.translation
-                QuestionType.CHINESE_TO_WORD -> currentState.currentWord.word
-                QuestionType.SPELLING -> currentState.currentWord.word
-            }
-
-            _uiState.update { state ->
-                val newStats = state.sessionStats.copy(
-                    wordsReviewed = state.sessionStats.wordsReviewed + 1,
-                    correctCount = if (isCorrect) state.sessionStats.correctCount + 1 else state.sessionStats.correctCount
-                )
-
-                val nextIndex = currentState.index + 1
-                if (nextIndex >= quizWordPool.size) {
-                    // 测试完成 - 先记录会话
-                    val durationSeconds = (System.currentTimeMillis() - state.sessionStats.startTime) / 1000
-                    val finalStats = newStats
-                    val accuracy = finalStats.correctCount.toFloat() / quizWordPool.size
-
-                    // 同步记录会话
-                    kotlinx.coroutines.runBlocking {
-                        recordLearningSessionUseCase(
-                            wordsLearned = 0, // 测试不计入新词学习
-                            wordsReviewed = finalStats.wordsReviewed,
-                            correctCount = finalStats.correctCount,
-                            durationSeconds = durationSeconds
-                        )
-                        
-                        // 记录每日学习记录
-                        val todayStart = java.time.LocalDate.now().atStartOfDay().toEpochSecond(java.time.ZoneOffset.systemDefault().rules.getOffset(java.time.Instant.now())) * 1000
-                        wordRepository.recordDailyLearning(
-                            date = todayStart,
-                            wordsLearned = 0, // 测试不计入新词学习
-                            wordsReviewed = finalStats.wordsReviewed,
-                            correctCount = finalStats.correctCount,
-                            totalQuestions = finalStats.wordsReviewed,
-                            durationMinutes = (durationSeconds / 60).toInt(),
-                            accuracy = accuracy
-                        )
-                        
-                        // 记录测试记录
-                        wordRepository.recordTest(
-                            testType = currentState.questionType.name,
-                            totalQuestions = finalStats.wordsReviewed,
-                            correctCount = finalStats.correctCount,
-                            accuracy = accuracy,
-                            durationSeconds = durationSeconds.toInt(),
-                            questionCount = quizWordPool.size,
-                            source = QuizSource.ALL.name
-                        )
-                        
-                        // 为每个测试单词记录学习记录
-                        quizWordPool.forEach { word ->
-                            val masteryLevel = if (word.masteryLevel > 0) word.masteryLevel else 1
-                            wordRepository.recordWordLearning(word.id, word.level.name, masteryLevel)
-                        }
-                        
-                        // 记录打卡
-                        wordRepository.recordCheckIn(
-                            date = todayStart,
-                            learningMinutes = (durationSeconds / 60).toInt(),
-                            wordsLearned = 0, // 测试不计入新词学习
-                            wordsReviewed = finalStats.wordsReviewed
-                        )
-                    }
-
-                    state.copy(
-                        learningState = LearningState.QuizResult(
-                            correctCount = finalStats.correctCount,
-                            totalCount = quizWordPool.size,
-                            accuracy = accuracy,
-                            mode = LearningMode.QUIZ
-                        ),
-                        sessionStats = finalStats,
-                        selectedAnswer = null,
-                        isAnswerRevealed = false
-                    )
-                } else {
-                    // 下一题
-                    val nextWord = quizWordPool[nextIndex]
-                    state.copy(
-                        learningState = currentState.copy(
-                            currentWord = nextWord,
-                            index = nextIndex,
-                            options = generateQuizOptions(nextWord, currentState.questionType)
-                        ),
-                        sessionStats = newStats,
-                        selectedAnswer = null,
-                        isAnswerRevealed = false
-                    )
                 }
             }
         }

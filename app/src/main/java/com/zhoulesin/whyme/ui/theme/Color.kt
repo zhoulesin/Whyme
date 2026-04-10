@@ -48,8 +48,8 @@ val OverlayPrimary = Color(0xD9000000) // 模态/对话框背景
 
 // Mastery Level Colors (调整为符合Linear风格的颜色)
 val MasteryLevel0 = Color(0x0DFFFFFF) // 未学习 - 极其细微的白色
-val MasteryLevel1 = Color(0x14FFCDD2) // 初学 - 淡红色
-val MasteryLevel2 = Color(0x14FFE0B2) // 模糊 - 淡橙色
-val MasteryLevel3 = Color(0x14FFF9C4) // 一般 - 淡黄色
-val MasteryLevel4 = Color(0x14C8E6C9) // 良好 - 淡绿色
-val MasteryLevel5 = AccentViolet // 掌握 - 使用品牌强调色
+val MasteryLevel1 = Color(0xFFFFCDD2) // 初学 - 淡红色 (不认识)
+val MasteryLevel2 = Color(0xFFFFE0B2) // 模糊 - 淡橙色 (模糊)
+val MasteryLevel3 = Color(0xFFFFF9C4) // 一般 - 淡黄色
+val MasteryLevel4 = Color(0xFFC8E6C9) // 良好 - 淡绿色 (认识)
+val MasteryLevel5 = AccentViolet // 掌握 - 使用品牌强调色 (太简单)

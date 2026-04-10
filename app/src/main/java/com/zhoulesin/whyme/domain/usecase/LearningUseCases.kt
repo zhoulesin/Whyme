@@ -16,19 +16,25 @@ class GetUserStatsUseCase @Inject constructor(
         preferencesDataStore.currentStreak,
         preferencesDataStore.longestStreak
     ) { goal, currentStreak, longestStreak ->
-        val totalLearned = wordRepository.getMasteredWordCount() + wordRepository.getLearningWordCount()
+        val totalLearned = wordRepository.getTotalLearnedWordCount()
         val mastered = wordRepository.getMasteredWordCount()
         val todayNew = wordRepository.getTodayNewWordsCount()
         val todayReview = wordRepository.getTodayReviewCount()
+        val todayTests = wordRepository.getTodayTestCount()
+        val todayTestAccuracy = wordRepository.getTodayTestAccuracy()
+        val todayLearningMinutes = wordRepository.getTodayLearningMinutes()
 
         UserStats(
             totalWordsLearned = totalLearned,
-            totalWordsReviewed = todayReview,
+            totalWordsReviewed = wordRepository.getTotalReviewCount(),
             currentStreak = currentStreak,
             longestStreak = longestStreak,
             totalLearningMinutes = 0,
             todayWordsLearned = todayNew,
             todayWordsReviewed = todayReview,
+            todayTests = todayTests,
+            todayTestAccuracy = todayTestAccuracy,
+            todayLearningMinutes = todayLearningMinutes,
             todayAccuracy = if (todayReview > 0) mastered.toFloat() / todayReview else 0f
         )
     }

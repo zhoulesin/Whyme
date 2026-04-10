@@ -62,7 +62,9 @@ com.zhoulesin.whyme/
     │   ├── NewWordLearningScreen.kt
     │   ├── ReviewScreen.kt
     │   ├── QuizScreen.kt
-    │   ├── LearningSessionScreen.kt
+    │   ├── StudySessionScreen.kt
+    │   ├── ReviewSessionScreen.kt
+    │   ├── QuizSessionScreen.kt
     │   ├── WordDetailScreen.kt
     │   └── WordDetailViewModel.kt
     ├── navigation/         # 导航配置

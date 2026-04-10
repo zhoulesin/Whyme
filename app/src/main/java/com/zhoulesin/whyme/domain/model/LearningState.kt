@@ -33,25 +33,9 @@ sealed class LearningState {
         val startTime: Long = System.currentTimeMillis()
     ) : LearningState()
 
-    data class Testing(
-        val currentWord: Word,
-        val questionType: QuestionType,
-        val index: Int,
-        val total: Int,
-        val options: List<QuizOption> = emptyList()
-    ) : LearningState()
-
-    data class QuizResult(
-        val correctCount: Int,
-        val totalCount: Int,
-        val accuracy: Float,
-        val mode: LearningMode
-    ) : LearningState()
-
     data class Completed(
         val learned: Int,
-        val reviewed: Int,
-        val accuracy: Float
+        val reviewed: Int
     ) : LearningState()
 
     data class Error(val message: String) : LearningState()

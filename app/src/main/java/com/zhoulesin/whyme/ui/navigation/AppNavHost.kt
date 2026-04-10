@@ -46,14 +46,8 @@ fun AppNavHost(
             LoginScreen(
                 userManager = userManager,
                 onLoginSuccess = {
-                    // 登录成功后导航到首页
-                    navController.navigate(Screen.Home.route) {
-                        // 清除登录页面的导航历史
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            inclusive = true
-                        }
-                        launchSingleTop = true
-                    }
+                    // 登录成功后，UserManager 会更新 isLoggedIn 状态
+                    // MainActivity 会根据状态自动切换到 MainScreen
                 }
             )
         }

@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -102,19 +103,14 @@ fun HomeScreen(
         // 今日学习进度
         TodayProgressCard(
             learned = uiState.userStats.todayWordsLearned,
-            reviewTotal = uiState.dailyGoal.reviewPerDay,
+            learnedGoal = uiState.dailyGoal.wordsPerDay,
             reviewDone = uiState.userStats.todayWordsReviewed,
-            streak = uiState.userStats.currentStreak,
+            reviewGoal = uiState.dailyGoal.reviewPerDay,
+            testsDone = uiState.userStats.todayTests,
+            testGoal = 20, // 假设测试目标为20
+            testAccuracy = uiState.userStats.todayTestAccuracy,
+            learningMinutes = uiState.userStats.todayLearningMinutes,
             onStartLearning = onNavigateToLearning
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // 统计数据行
-        StatsRow(
-            totalWords = uiState.userStats.totalWordsLearned,
-            totalMinutes = uiState.userStats.totalLearningMinutes,
-            accuracy = uiState.userStats.todayAccuracy
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -136,9 +132,13 @@ fun HomeScreen(
 @Composable
 private fun TodayProgressCard(
     learned: Int,
-    reviewTotal: Int,
+    learnedGoal: Int,
     reviewDone: Int,
-    streak: Int,
+    reviewGoal: Int,
+    testsDone: Int,
+    testGoal: Int,
+    testAccuracy: Float,
+    learningMinutes: Int,
     onStartLearning: () -> Unit
 ) {
     Surface(
@@ -157,8 +157,8 @@ private fun TodayProgressCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // 左侧进度环
-                val totalGoal = learned + reviewTotal
-                val progress = if (totalGoal > 0) (learned + reviewDone).toFloat() / totalGoal else 0f
+                val totalGoal = learnedGoal + reviewGoal + testGoal
+                val progress = if (totalGoal > 0) (learned + reviewDone + testsDone).toFloat() / totalGoal else 0f
 
                 CircularProgressRing(
                     progress = progress,
@@ -185,12 +185,35 @@ private fun TodayProgressCard(
                 // 右侧信息
                 Column(
                     modifier = Modifier.padding(start = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    StatColumn(label = "新学单词", value = "$learned")
-                    StatColumn(label = "复习完成", value = "$reviewDone / $reviewTotal")
-                    StatColumn(label = "连续打卡", value = "$streak 天")
+                    StatColumn(label = "今日学习", value = "$learned / $learnedGoal")
+                    StatColumn(label = "今日复习", value = "$reviewDone / $reviewGoal")
+                    StatColumn(label = "今日测试", value = "$testsDone / $testGoal")
+                    StatColumn(label = "测试正确率", value = "${(testAccuracy * 100).toInt()}%")
                 }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // 学习时长
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.AccessTime,
+                    contentDescription = "学习时长",
+                    tint = AccentViolet,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "今日学习时长: $learningMinutes 分钟",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = SecondaryText
+                )
             }
 
             Spacer(modifier = Modifier.height(20.dp))

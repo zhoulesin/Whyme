@@ -7,6 +7,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
@@ -38,29 +40,33 @@ class MainActivity : ComponentActivity() {
         val userManager = UserManager.getInstance(this)
         userManager.setUserDatabaseManager(userDatabaseManager)
 
-        scope.launch {
-            userManager.restoreLoginState()
-            val isLoggedIn = userManager.isLoggedIn.first()
-
-            enableEdgeToEdge()
-            setContent {
-                WhyMeEnglishTheme {
-                    val navController = rememberNavController()
-                    if (isLoggedIn) {
-                        MainScreen(
-                            navController = navController,
-                            userManager = userManager
-                        )
-                    } else {
-                        AppNavHost(
-                            navController = navController,
-                            paddingValues = androidx.compose.foundation.layout.PaddingValues(),
-                            userManager = userManager,
-                            startDestination = Screen.Login.route
-                        )
-                    }
+        enableEdgeToEdge()
+        setContent {
+            WhyMeEnglishTheme {
+                val navController = rememberNavController()
+                val isLoggedIn by userManager.isLoggedIn.collectAsState(initial = false)
+                
+                if (isLoggedIn) {
+                    // 已登录，直接显示主屏幕（带底部导航栏）
+                    MainScreen(
+                        navController = navController,
+                        userManager = userManager
+                    )
+                } else {
+                    // 未登录，显示登录界面
+                    AppNavHost(
+                        navController = navController,
+                        paddingValues = androidx.compose.foundation.layout.PaddingValues(),
+                        userManager = userManager,
+                        startDestination = Screen.Login.route
+                    )
                 }
             }
+        }
+        
+        // 恢复登录状态
+        scope.launch {
+            userManager.restoreLoginState()
         }
     }
 }

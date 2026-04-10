@@ -1,5 +1,6 @@
 package com.zhoulesin.whyme.ui.learning
 
+import ReviewState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -15,6 +16,7 @@ import com.zhoulesin.whyme.domain.model.LearningState
 import com.zhoulesin.whyme.domain.model.ReviewResult
 import com.zhoulesin.whyme.ui.components.MasteryButtons
 import com.zhoulesin.whyme.ui.components.WordCard
+import com.zhoulesin.whyme.ui.learning.ReviewContent
 import com.zhoulesin.whyme.ui.theme.*
 
 /**
@@ -42,7 +44,7 @@ fun ReviewScreen(
         if (!uiState.isDataLoaded) return@LaunchedEffect
 
         val hasWordsToReview = uiState.wordsForReview.isNotEmpty()
-        val isIdle = uiState.learningState is LearningState.Idle
+        val isIdle = uiState.reviewState is ReviewState.Idle
 
         if (!isIdle) return@LaunchedEffect
 
@@ -112,8 +114,8 @@ fun ReviewScreen(
                 .padding(16.dp)
                 .background(MarketingBlack)
         ) {
-            when (val state = uiState.learningState) {
-                is LearningState.Idle -> {
+            when (val state = uiState.reviewState) {
+                is ReviewState.Idle -> {
                     // 空闲状态 - 等待数据加载或显示空状态
                     if (!uiState.isDataLoaded) {
                         // 正在加载
@@ -168,7 +170,7 @@ fun ReviewScreen(
                     }
                 }
 
-                is LearningState.Learning -> {
+                is ReviewState.Reviewing -> {
                     // 复习状态 - 显示单词卡片
                     ReviewContent(
                         state = state,
@@ -180,11 +182,10 @@ fun ReviewScreen(
                     )
                 }
 
-                is LearningState.Completed -> {
+                is ReviewState.Completed -> {
                     // 完成状态
                     ReviewCompletedContent(
                         reviewed = state.reviewed,
-                        accuracy = state.accuracy,
                         onContinue = {
                             viewModel.exitSession()
                             onNavigateBack()
@@ -275,7 +276,6 @@ private fun ReviewContent(
 @Composable
 private fun ReviewCompletedContent(
     reviewed: Int,
-    accuracy: Float,
     onContinue: () -> Unit,
     onGoHome: () -> Unit,
     modifier: Modifier = Modifier
@@ -301,11 +301,6 @@ private fun ReviewCompletedContent(
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = "今日复习：$reviewed 词",
-            style = MaterialTheme.typography.bodyLarge,
-            color = PrimaryText
-        )
-        Text(
-            text = "准确率：${String.format("%.1f", accuracy * 100)}%",
             style = MaterialTheme.typography.bodyLarge,
             color = PrimaryText
         )

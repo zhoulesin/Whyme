@@ -34,4 +34,7 @@ interface ReviewRecordDao {
 
     @Query("DELETE FROM review_records")
     suspend fun clearAllRecords()
+
+    @Query("SELECT COUNT(*) FROM review_records")
+    suspend fun getTotalReviewCount(): Int
 }

@@ -24,6 +24,9 @@ data class ProfileUiState(
         totalLearningMinutes = 0,
         todayWordsLearned = 0,
         todayWordsReviewed = 0,
+        todayTests = 0,
+        todayTestAccuracy = 0f,
+        todayLearningMinutes = 0,
         todayAccuracy = 0f
     ),
     val dailyGoal: DailyGoal = DailyGoal(),

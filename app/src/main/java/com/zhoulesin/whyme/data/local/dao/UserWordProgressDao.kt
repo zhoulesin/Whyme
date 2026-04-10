@@ -114,6 +114,9 @@ interface UserWordProgressDao {
     """)
     suspend fun getTodayReviewCount(todayStart: Long): Int
 
+    @Query("SELECT COUNT(*) FROM user_word_progress WHERE learnedAt IS NOT NULL")
+    suspend fun getTotalLearnedWordCount(): Int
+
     @Query("DELETE FROM user_word_progress")
     suspend fun clearAllProgress()
 }

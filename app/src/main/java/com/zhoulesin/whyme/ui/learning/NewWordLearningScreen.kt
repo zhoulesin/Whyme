@@ -185,7 +185,6 @@ fun NewWordLearningScreen(
                     LearningCompletedContent(
                         learned = state.learned,
                         reviewed = state.reviewed,
-                        accuracy = state.accuracy,
                         onContinue = {
                             viewModel.exitSession()
                             onNavigateBack()

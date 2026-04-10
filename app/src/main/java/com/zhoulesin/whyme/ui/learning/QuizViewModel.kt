@@ -52,7 +52,7 @@ class QuizViewModel @Inject constructor(
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
-                        learningState = LearningState.Error("加载测试单词失败: ${e.message}"),
+                        quizState = QuizState.Error("加载测试单词失败: ${e.message}"),
                         isDataLoaded = true
                     )
                 }
@@ -76,7 +76,7 @@ class QuizViewModel @Inject constructor(
         if (quizWordPool.isEmpty()) {
             _uiState.update {
                 it.copy(
-                    learningState = LearningState.Error("没有足够的单词进行测试")
+                    quizState = QuizState.Error("没有足够的单词进行测试")
                 )
             }
             return
@@ -85,7 +85,7 @@ class QuizViewModel @Inject constructor(
         val firstWord = quizWordPool.first()
         _uiState.update { state ->
             state.copy(
-                learningState = LearningState.Testing(
+                quizState = QuizState.Testing(
                     currentWord = firstWord,
                     questionType = config.questionType,
                     index = 0,
@@ -133,8 +133,8 @@ class QuizViewModel @Inject constructor(
      * 选择答案
      */
     fun selectAnswer(answer: String) {
-        val currentState = _uiState.value.learningState
-        if (currentState is LearningState.Testing && !_uiState.value.isAnswerRevealed) {
+        val currentQuizState = _uiState.value.quizState
+        if (currentQuizState is QuizState.Testing && !_uiState.value.isAnswerRevealed) {
             _uiState.update { it.copy(selectedAnswer = answer, isAnswerRevealed = true) }
         }
     }
@@ -143,42 +143,42 @@ class QuizViewModel @Inject constructor(
      * 下一题
      */
     fun nextQuestion() {
-        val currentState = _uiState.value.learningState
-        if (currentState is LearningState.Testing) {
-            val isCorrect = _uiState.value.selectedAnswer == when (currentState.questionType) {
-                QuestionType.WORD_TO_CHINESE -> currentState.currentWord.translation
-                QuestionType.CHINESE_TO_WORD -> currentState.currentWord.word
-                QuestionType.SPELLING -> currentState.currentWord.word
+        val currentQuizState = _uiState.value.quizState
+        if (currentQuizState is QuizState.Testing) {
+            val isCorrect = _uiState.value.selectedAnswer == when (currentQuizState.questionType) {
+                QuestionType.WORD_TO_CHINESE -> currentQuizState.currentWord.translation
+                QuestionType.CHINESE_TO_WORD -> currentQuizState.currentWord.word
+                QuestionType.SPELLING -> currentQuizState.currentWord.word
             }
 
             _uiState.update { state ->
                 val newStats = state.sessionStats.copy(
-                    wordsReviewed = state.sessionStats.wordsReviewed + 1,
+                    wordsReviewed = 0, // 测试不计入复习数量
                     correctCount = if (isCorrect) state.sessionStats.correctCount + 1 else state.sessionStats.correctCount
                 )
 
-                val nextIndex = currentState.index + 1
+                val nextIndex = currentQuizState.index + 1
                 if (nextIndex >= quizWordPool.size) {
                     // 测试完成 - 先记录会话
                     val durationSeconds = (System.currentTimeMillis() - state.sessionStats.startTime) / 1000
                     val finalStats = newStats
+                    val accuracy = finalStats.correctCount.toFloat() / quizWordPool.size
 
                     // 同步记录会话
                     kotlinx.coroutines.runBlocking {
                         recordLearningSessionUseCase(
                             wordsLearned = 0, // 测试不计入新词学习
-                            wordsReviewed = finalStats.wordsReviewed,
+                            wordsReviewed = 0, // 测试不计入复习数量
                             correctCount = finalStats.correctCount,
                             durationSeconds = durationSeconds
                         )
                     }
 
                     state.copy(
-                        learningState = LearningState.QuizResult(
+                        quizState = QuizState.Result(
                             correctCount = finalStats.correctCount,
                             totalCount = quizWordPool.size,
-                            accuracy = finalStats.correctCount.toFloat() / quizWordPool.size,
-                            mode = LearningMode.QUIZ
+                            accuracy = accuracy
                         ),
                         sessionStats = finalStats,
                         selectedAnswer = null,
@@ -188,10 +188,10 @@ class QuizViewModel @Inject constructor(
                     // 下一题
                     val nextWord = quizWordPool[nextIndex]
                     state.copy(
-                        learningState = currentState.copy(
+                        quizState = currentQuizState.copy(
                             currentWord = nextWord,
                             index = nextIndex,
-                            options = generateQuizOptions(nextWord, currentState.questionType)
+                            options = generateQuizOptions(nextWord, currentQuizState.questionType)
                         ),
                         sessionStats = newStats,
                         selectedAnswer = null,
@@ -208,7 +208,7 @@ class QuizViewModel @Inject constructor(
     fun exitSession() {
         _uiState.update {
             it.copy(
-                learningState = LearningState.Idle,
+                quizState = QuizState.Idle,
                 selectedAnswer = null,
                 isAnswerRevealed = false,
                 sessionStats = SessionStats()
@@ -216,24 +216,3 @@ class QuizViewModel @Inject constructor(
         }
     }
 }
-
-/**
- * 测试界面 UI 状态
- */
-data class QuizUiState(
-    // 单词数据
-    val allLearnedWords: List<Word> = emptyList(),
-    val favoriteWords: List<Word> = emptyList(),
-
-    // 学习状态
-    val learningState: LearningState = LearningState.Idle,
-    val sessionStats: SessionStats = SessionStats(),
-
-    // 测试状态
-    val selectedAnswer: String? = null,
-    val isAnswerRevealed: Boolean = false,
-    val quizStartTime: Long = 0,
-
-    // 数据加载状态
-    val isDataLoaded: Boolean = false
-)
