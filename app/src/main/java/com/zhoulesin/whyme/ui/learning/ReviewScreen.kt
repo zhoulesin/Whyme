@@ -216,7 +216,7 @@ fun ReviewScreen(
 
 @Composable
 private fun ReviewContent(
-    state: LearningState.Learning,
+    state: ReviewState.Reviewing,
     isFlipped: Boolean,
     onFlip: () -> Unit,
     onMarkWord: (ReviewResult) -> Unit,

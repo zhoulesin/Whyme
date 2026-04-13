@@ -2,12 +2,14 @@ package com.zhoulesin.whyme.ui.learning
 
 import QuizState
 import ReviewState
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhoulesin.whyme.domain.model.*
 import com.zhoulesin.whyme.domain.repository.WordRepository
 import com.zhoulesin.whyme.domain.repository.WordBankRepository
 import com.zhoulesin.whyme.domain.usecase.*
+import com.zhoulesin.whyme.utils.TextToSpeechHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -120,6 +122,9 @@ class LearningViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(LearningUiState())
     val uiState: StateFlow<LearningUiState> = _uiState.asStateFlow()
+
+    // TTS 助手
+    private var ttsHelper: TextToSpeechHelper? = null
 
     // 当前学习的级别
     private var currentLevel: WordLevel? = null
@@ -454,6 +459,38 @@ class LearningViewModel @Inject constructor(
             wordRepository.insertWords(sampleWords)
             loadStats()
         }
+    }
+
+    // ==================== TTS 功能 ====================
+
+    /**
+     * 初始化 TTS
+     */
+    fun initTTS(context: Context, callback: (Boolean) -> Unit) {
+        ttsHelper = TextToSpeechHelper(context)
+        ttsHelper?.initialize(callback)
+    }
+
+    /**
+     * 播放单词发音
+     */
+    fun speakWord(word: String) {
+        ttsHelper?.speak(word)
+    }
+
+    /**
+     * 停止发音
+     */
+    fun stopSpeaking() {
+        ttsHelper?.stop()
+    }
+
+    /**
+     * 关闭 TTS
+     */
+    override fun onCleared() {
+        super.onCleared()
+        ttsHelper?.shutdown()
     }
 }
 

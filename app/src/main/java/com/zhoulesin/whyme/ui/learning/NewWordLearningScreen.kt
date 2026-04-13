@@ -8,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -30,10 +31,18 @@ fun NewWordLearningScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showExitDialog by remember { mutableStateOf(false) }
     var sessionStarted by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         // 初始化学习会话
         viewModel.initSession()
+        // 初始化 TTS
+        viewModel.initTTS(context) { success ->
+            if (!success) {
+                // TTS 初始化失败，可以在这里处理错误
+                println("TTS initialization failed")
+            }
+        }
     }
 
     // 进入页面后启动学习流程
@@ -176,6 +185,7 @@ fun NewWordLearningScreen(
                         onFlip = { viewModel.flipCard() },
                         onMarkWord = { result -> viewModel.markWord(result) },
                         onToggleFavorite = { wordId -> viewModel.toggleFavorite(wordId) },
+                        onSpeak = { viewModel.speakWord(state.currentWord.word) },
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -220,6 +230,7 @@ private fun LearningContent(
     onFlip: () -> Unit,
     onMarkWord: (ReviewResult) -> Unit,
     onToggleFavorite: (Long) -> Unit,
+    onSpeak: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -248,7 +259,7 @@ private fun LearningContent(
             isFlipped = isFlipped,
             onFlip = onFlip,
             onFavoriteClick = onToggleFavorite,
-            onSpeakClick = { /* TODO: TTS */ }
+            onSpeakClick = onSpeak
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -276,7 +287,6 @@ private fun LearningContent(
 private fun LearningCompletedContent(
     learned: Int,
     reviewed: Int,
-    accuracy: Float,
     onContinue: () -> Unit,
     onGoHome: () -> Unit,
     modifier: Modifier = Modifier
@@ -302,11 +312,6 @@ private fun LearningCompletedContent(
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = "今日学习：$learned 词",
-            style = MaterialTheme.typography.bodyLarge,
-            color = PrimaryText
-        )
-        Text(
-            text = "准确率：${String.format("%.1f", accuracy * 100)}%",
             style = MaterialTheme.typography.bodyLarge,
             color = PrimaryText
         )
