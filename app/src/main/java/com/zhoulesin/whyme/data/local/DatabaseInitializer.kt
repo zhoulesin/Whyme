@@ -103,12 +103,9 @@ class DatabaseInitializer(
             if (type.isNotEmpty()) "$type. $translation" else translation
         } ?: ""
 
-        // 取第一个例句
-        val example = sentences?.firstOrNull()?.let {
-            val sentence = it.sentence ?: ""
-            val translation = it.translation ?: ""
-            "\"$sentence\"\n$translation"
-        } ?: ""
+        // 取第一个例句，拆分为英文原句和中文译文
+        val example = sentences?.firstOrNull()?.sentence ?: ""
+        val exampleTranslation = sentences?.firstOrNull()?.translation ?: ""
 
         // 合并短语
         val phraseText = phrases?.take(3)?.joinToString("; ") {
@@ -128,6 +125,7 @@ class DatabaseInitializer(
             phonetic = phonetic,
             definition = definition,
             example = example,
+            exampleTranslation = exampleTranslation,
             translation = firstTranslation,
             wordBank = source.wordBank,
             level = source.level.name

@@ -11,6 +11,7 @@ data class Word(
     val phonetic: String,
     val definition: String = "",
     val example: String = "",
+    val exampleTranslation: String = "",
     val translation: String,
     val masteryLevel: Int = 0, // 0-5 掌握程度
     val isFavorite: Boolean = false,

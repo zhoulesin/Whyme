@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.zhoulesin.whyme.domain.model.Word
 import com.zhoulesin.whyme.ui.theme.*
@@ -35,36 +36,37 @@ fun WordCard(
     onFlip: () -> Unit,
     onFavoriteClick: (Long) -> Unit,
     onSpeakClick: () -> Unit,
-    modifier: Modifier = Modifier
+    onSpeakExampleClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    cardHeight: Dp = 280.dp,
+    cornerRadius: Dp = 8.dp,
+    animationDuration: Int = 400,
+    showFavoriteButton: Boolean = true,
+    showSpeakButton: Boolean = true,
+    frontHintText: String = "点击卡片查看释义",
+    backHintText: String = "点击卡片返回"
 ) {
     val rotation by animateFloatAsState(
         targetValue = if (isFlipped) 180f else 0f,
-        animationSpec = tween(durationMillis = 400),
+        animationSpec = tween(durationMillis = animationDuration),
         label = "card_flip"
     )
 
     val backgroundColor by animateColorAsState(
-        targetValue = when (word.masteryLevel) {
-            0 -> MasteryLevel0
-            1 -> MasteryLevel1
-            2 -> MasteryLevel2
-            3 -> MasteryLevel3
-            4 -> MasteryLevel4
-            else -> MasteryLevel5
-        },
+        targetValue = MasteryLevel0,
         label = "card_color"
     )
 
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .height(280.dp)
+            .height(cardHeight)
             .graphicsLayer {
                 rotationY = rotation
                 cameraDistance = 12f * density
             }
             .clickable { onFlip() },
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(cornerRadius),
         color = backgroundColor,
         border = BorderStroke(1.dp, BorderStandard)
     ) {
@@ -77,13 +79,18 @@ fun WordCard(
                 WordFrontContent(
                     word = word,
                     onFavoriteClick = onFavoriteClick,
-                    onSpeakClick = onSpeakClick
+                    onSpeakClick = onSpeakClick,
+                    showFavoriteButton = showFavoriteButton,
+                    showSpeakButton = showSpeakButton,
+                    hintText = frontHintText
                 )
             } else {
                 // 背面 - 中文释义
                 WordBackContent(
                     word = word,
-                    modifier = Modifier.graphicsLayer { rotationY = 180f }
+                    onSpeakExampleClick = onSpeakExampleClick,
+                    modifier = Modifier.graphicsLayer { rotationY = 180f },
+                    hintText = backHintText
                 )
             }
         }
@@ -94,7 +101,10 @@ fun WordCard(
 private fun WordFrontContent(
     word: Word,
     onFavoriteClick: (Long) -> Unit,
-    onSpeakClick: () -> Unit
+    onSpeakClick: () -> Unit,
+    showFavoriteButton: Boolean,
+    showSpeakButton: Boolean,
+    hintText: String
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -103,16 +113,18 @@ private fun WordFrontContent(
             .padding(24.dp)
     ) {
         // 收藏按钮
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
-        ) {
-            IconButton(onClick = { onFavoriteClick(word.id) }) {
-                Icon(
-                    imageVector = if (word.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                    contentDescription = "收藏",
-                    tint = if (word.isFavorite) Error else TertiaryText
-                )
+        if (showFavoriteButton) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                IconButton(onClick = { onFavoriteClick(word.id) }) {
+                    Icon(
+                        imageVector = if (word.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                        contentDescription = "收藏",
+                        tint = if (word.isFavorite) Error else TertiaryText
+                    )
+                }
             }
         }
 
@@ -139,28 +151,30 @@ private fun WordFrontContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         // 发音按钮
-        IconButton(
-            onClick = onSpeakClick,
-            modifier = Modifier
-                .size(48.dp)
-                .background(
-                    color = BrandIndigo,
-                    shape = RoundedCornerShape(50)
+        if (showSpeakButton) {
+            IconButton(
+                onClick = onSpeakClick,
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(
+                        color = BrandIndigo,
+                        shape = RoundedCornerShape(50)
+                    )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.VolumeUp,
+                    contentDescription = "发音",
+                    tint = PrimaryText,
+                    modifier = Modifier.size(24.dp)
                 )
-        ) {
-            Icon(
-                imageVector = Icons.Default.VolumeUp,
-                contentDescription = "发音",
-                tint = PrimaryText,
-                modifier = Modifier.size(24.dp)
-            )
+            }
         }
 
         Spacer(modifier = Modifier.weight(1f))
 
         // 提示
         Text(
-            text = "点击卡片查看释义",
+            text = hintText,
             style = MaterialTheme.typography.labelMedium,
             color = TertiaryText
         )
@@ -170,7 +184,9 @@ private fun WordFrontContent(
 @Composable
 private fun WordBackContent(
     word: Word,
-    modifier: Modifier = Modifier
+    onSpeakExampleClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    hintText: String
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -202,19 +218,55 @@ private fun WordBackContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         // 例句
-        Text(
-            text = word.example,
-            style = MaterialTheme.typography.bodyMedium,
-            fontStyle = FontStyle.Italic,
-            color = TertiaryText,
-            textAlign = TextAlign.Center
-        )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // 英文原句
+            Text(
+                text = word.example,
+                style = MaterialTheme.typography.bodyMedium,
+                fontStyle = FontStyle.Italic,
+                color = TertiaryText,
+                textAlign = TextAlign.Center
+            )
+            
+            // 中文译文
+            if (word.exampleTranslation.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = word.exampleTranslation,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TertiaryText,
+                    textAlign = TextAlign.Center
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // 例句发音按钮
+            IconButton(
+                onClick = onSpeakExampleClick,
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(
+                        color = BrandIndigo,
+                        shape = RoundedCornerShape(50)
+                    )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.VolumeUp,
+                    contentDescription = "例句发音",
+                    tint = PrimaryText,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.weight(1f))
 
         // 提示
         Text(
-            text = "点击卡片返回",
+            text = hintText,
             style = MaterialTheme.typography.labelMedium,
             color = TertiaryText
         )

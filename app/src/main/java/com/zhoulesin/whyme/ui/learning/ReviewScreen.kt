@@ -188,6 +188,7 @@ fun ReviewScreen(
                         onMarkWord = { result -> viewModel.markWord(result) },
                         onToggleFavorite = { wordId -> viewModel.toggleFavorite(wordId) },
                         onSpeak = { viewModel.speakWord(state.currentWord.word) },
+                        onSpeakExampleClick = { viewModel.speakWord(state.currentWord.example) },
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -232,6 +233,7 @@ private fun ReviewContent(
     onMarkWord: (ReviewResult) -> Unit,
     onToggleFavorite: (Long) -> Unit,
     onSpeak: () -> Unit,
+    onSpeakExampleClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -260,7 +262,8 @@ private fun ReviewContent(
             isFlipped = isFlipped,
             onFlip = onFlip,
             onFavoriteClick = onToggleFavorite,
-            onSpeakClick = onSpeak
+            onSpeakClick = onSpeak,
+            onSpeakExampleClick = onSpeakExampleClick
         )
 
         Spacer(modifier = Modifier.height(24.dp))

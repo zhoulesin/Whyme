@@ -53,18 +53,6 @@ fun WordDetailScreen(
                             modifier = Modifier.size(20.dp)
                         )
                     }
-                },
-                actions = {
-                    uiState.word?.let { word ->
-                        IconButton(onClick = { viewModel.toggleFavorite() }) {
-                            Icon(
-                                imageVector = if (word.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                                contentDescription = "收藏",
-                                tint = if (word.isFavorite) Error else TertiaryText,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
                 }
             )
         }
@@ -110,7 +98,8 @@ fun WordDetailScreen(
                             isFlipped = isFlipped,
                             onFlip = { isFlipped = !isFlipped },
                             onFavoriteClick = { viewModel.toggleFavorite() },
-                            onSpeakClick = { viewModel.speakWord(uiState.word!!.word) }
+                            onSpeakClick = { viewModel.speakWord(uiState.word!!.word) },
+                            onSpeakExampleClick = { viewModel.speakWord(uiState.word!!.example) }
                         )
                 }
             }

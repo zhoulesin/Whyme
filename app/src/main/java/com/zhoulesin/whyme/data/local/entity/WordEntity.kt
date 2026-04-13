@@ -24,8 +24,9 @@ data class WordEntity(
     val word: String,                    // 单词（唯一索引）
     val phonetic: String,                // 音标
     val definition: String,              // 详细释义
-    val example: String,                 // 例句
-    val translation: String,             // 中文翻译
+    val example: String,                 // 例句（英文原句）
+    val exampleTranslation: String,      // 例句中文译文
+    val translation: String,             // 单词中文翻译
 
     // 美式/英式音标（可选）
     val usPhonetic: String? = null,
