@@ -38,7 +38,7 @@ fun WordCard(
     onSpeakClick: () -> Unit,
     onSpeakExampleClick: () -> Unit,
     modifier: Modifier = Modifier,
-    cardHeight: Dp = 280.dp,
+    cardHeight: Dp = 360.dp,
     cornerRadius: Dp = 8.dp,
     animationDuration: Int = 400,
     showFavoriteButton: Boolean = true,

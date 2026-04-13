@@ -14,8 +14,8 @@ class TextToSpeechHelper(private val context: Context) {
         tts = TextToSpeech(context) { status ->
             isInitialized = (status == TextToSpeech.SUCCESS)
             if (isInitialized) {
-                // 设置语言为英语
-                val result = tts?.setLanguage(Locale.ENGLISH)
+                // 设置语言为美式英语
+                val result = tts?.setLanguage(Locale.US)
                 if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                     isInitialized = false
                     Log.e("TextToSpeechHelper", "Language not supported")
@@ -61,10 +61,10 @@ class TextToSpeechHelper(private val context: Context) {
     fun setLanguage(language: String) {
         if (isInitialized) {
             val locale = when (language) {
-                "en" -> Locale.ENGLISH
+                "en" -> Locale.US  // 使用美式英语
                 "zh" -> Locale.CHINESE
                 "ja" -> Locale.JAPANESE
-                else -> Locale.ENGLISH
+                else -> Locale.US  // 默认使用美式英语
             }
             val result = tts?.setLanguage(locale)
             if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
