@@ -1,10 +1,12 @@
 package com.zhoulesin.whyme.ui.learning
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhoulesin.whyme.domain.model.*
 import com.zhoulesin.whyme.domain.usecase.*
 import com.zhoulesin.whyme.domain.repository.WordBankRepository
+import com.zhoulesin.whyme.utils.TextToSpeechHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +30,7 @@ class ReviewViewModel @Inject constructor(
     val uiState: StateFlow<ReviewUiState> = _uiState
 
     private var currentLevel: WordLevel? = null
+    private var ttsHelper: TextToSpeechHelper? = null
 
     /**
      * 初始化复习会话
@@ -214,5 +217,19 @@ class ReviewViewModel @Inject constructor(
                 sessionStats = SessionStats()
             )
         }
+    }
+
+    fun initTTS(context: Context, callback: (Boolean) -> Unit) {
+        ttsHelper = TextToSpeechHelper(context)
+        ttsHelper?.initialize(callback)
+    }
+
+    fun speakWord(word: String) {
+        ttsHelper?.speak(word)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        ttsHelper?.shutdown()
     }
 }

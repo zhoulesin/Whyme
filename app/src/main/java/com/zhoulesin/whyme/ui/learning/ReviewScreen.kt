@@ -9,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -32,10 +33,18 @@ fun ReviewScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showExitDialog by remember { mutableStateOf(false) }
     var sessionStarted by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         // 初始化复习会话
         viewModel.initSession()
+        // 初始化 TTS
+        viewModel.initTTS(context) { success ->
+            if (!success) {
+                // TTS 初始化失败，可以在这里处理错误
+                println("TTS initialization failed")
+            }
+        }
     }
 
     // 进入页面后启动复习流程
@@ -178,6 +187,7 @@ fun ReviewScreen(
                         onFlip = { viewModel.flipCard() },
                         onMarkWord = { result -> viewModel.markWord(result) },
                         onToggleFavorite = { wordId -> viewModel.toggleFavorite(wordId) },
+                        onSpeak = { viewModel.speakWord(state.currentWord.word) },
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -221,6 +231,7 @@ private fun ReviewContent(
     onFlip: () -> Unit,
     onMarkWord: (ReviewResult) -> Unit,
     onToggleFavorite: (Long) -> Unit,
+    onSpeak: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -249,7 +260,7 @@ private fun ReviewContent(
             isFlipped = isFlipped,
             onFlip = onFlip,
             onFavoriteClick = onToggleFavorite,
-            onSpeakClick = { /* TODO: TTS */ }
+            onSpeakClick = onSpeak
         )
 
         Spacer(modifier = Modifier.height(24.dp))

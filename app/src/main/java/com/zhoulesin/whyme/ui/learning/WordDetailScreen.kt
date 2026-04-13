@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -26,6 +27,17 @@ fun WordDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var isFlipped by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        // 初始化 TTS
+        viewModel.initTTS(context) { success ->
+            if (!success) {
+                // TTS 初始化失败，可以在这里处理错误
+                println("TTS initialization failed")
+            }
+        }
+    }
 
     Scaffold(
         containerColor = MarketingBlack,
@@ -94,12 +106,12 @@ fun WordDetailScreen(
                 }
                 uiState.word != null -> {
                     WordCard(
-                        word = uiState.word!!,
-                        isFlipped = isFlipped,
-                        onFlip = { isFlipped = !isFlipped },
-                        onFavoriteClick = { viewModel.toggleFavorite() },
-                        onSpeakClick = { /* TODO: TTS */ }
-                    )
+                            word = uiState.word!!,
+                            isFlipped = isFlipped,
+                            onFlip = { isFlipped = !isFlipped },
+                            onFavoriteClick = { viewModel.toggleFavorite() },
+                            onSpeakClick = { viewModel.speakWord(uiState.word!!.word) }
+                        )
                 }
             }
         }
