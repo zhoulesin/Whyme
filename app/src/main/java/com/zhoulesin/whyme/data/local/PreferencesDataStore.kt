@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStoreFile
+import com.zhoulesin.whyme.data.datastore.UserManager
 import com.zhoulesin.whyme.domain.model.DailyGoal
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -52,7 +53,7 @@ class PreferencesDataStore @Inject constructor(
 
     @Synchronized
     private fun resolveDataStore(): DataStore<Preferences> {
-        val userId = com.zhoulesin.whyme.data.datastore.CurrentUser.userId ?: "default"
+        val userId = UserManager.getInstance(context).userId ?: "default"
         return dataStores.getOrPut(userId) {
             PreferenceDataStoreFactory.create(
                 produceFile = { context.preferencesDataStoreFile("user_prefs_$userId") }

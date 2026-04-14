@@ -44,7 +44,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             WhyMeEnglishTheme {
                 val navController = rememberNavController()
-                val isLoggedIn by userManager.isLoggedIn.collectAsState(initial = false)
+                val isLoggedIn by userManager.isLoggedInFlow.collectAsState(initial = false)
                 
                 if (isLoggedIn) {
                     // 已登录，直接显示主屏幕（带底部导航栏）

@@ -13,7 +13,7 @@ import com.zhoulesin.whyme.data.local.dao.DailyLearningRecordDao
 import com.zhoulesin.whyme.data.local.dao.ReviewRecordDao
 import com.zhoulesin.whyme.data.local.dao.TestRecordDao
 import com.zhoulesin.whyme.data.local.dao.CheckInRecordDao
-import com.zhoulesin.whyme.data.datastore.CurrentUser
+import com.zhoulesin.whyme.data.datastore.UserManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -36,7 +36,7 @@ class UserDatabaseManager @Inject constructor(
 
     @Synchronized
     fun getDatabase(): AppDatabase {
-        val userId = CurrentUser.userId
+        val userId = UserManager.getInstance(context).userId
         val db = currentDatabase
         if (db != null && currentUserId == userId && db.isOpen) {
             return db
