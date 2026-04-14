@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhoulesin.whyme.domain.model.*
 import com.zhoulesin.whyme.domain.repository.WordRepository
-import com.zhoulesin.whyme.domain.repository.WordBankRepository
 import com.zhoulesin.whyme.domain.usecase.*
 import com.zhoulesin.whyme.utils.TextToSpeechHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -116,8 +115,7 @@ class LearningViewModel @Inject constructor(
     private val updateWordReviewUseCase: UpdateWordReviewUseCase,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
     private val recordLearningSessionUseCase: RecordLearningSessionUseCase,
-    private val wordRepository: WordRepository,
-    private val wordBankRepository: WordBankRepository
+    private val wordRepository: WordRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LearningUiState())
@@ -137,16 +135,25 @@ class LearningViewModel @Inject constructor(
     private fun observeWordPools() {
         viewModelScope.launch {
             combine(
-                wordBankRepository.getCurrentLevel(),
-                wordBankRepository.getCurrentLevel().flatMapLatest { level ->
-                    getWordsForLearningUseCase(level = level)
-                },
-                getWordsForReviewUseCase(),
+                getWordsForLearningUseCase(level = WordLevel.CET6),
+                getWordsForReviewUseCase(level = WordLevel.CET6),
                 getFavoriteWordsUseCase(),
                 wordRepository.getAllWords()
-            ) { level, toLearn, toReview, favorites, allWords ->
-                val allLearnedWords = allWords.filter { it.isLearned || it.reviewCount > 0 }
-                Quint(level, toLearn, toReview, favorites, allLearnedWords)
+            ) { toLearn, toReview, favorites, allWords ->
+                val cet6Words = allWords.filter { it.level == WordLevel.CET6 }
+                val allLearnedWords = cet6Words.filter { it.isLearned || it.reviewCount > 0 }
+                // 兜底：若进度表未就绪导致用例返回空，则直接从 CET6 词库随机取一批可学习词
+                val fallbackToLearn = cet6Words
+                    .filter { !it.isLearned }
+                    .shuffled()
+                    .take(20)
+                Quint(
+                    WordLevel.CET6,
+                    if (toLearn.isNotEmpty()) toLearn else fallbackToLearn,
+                    toReview,
+                    favorites.filter { it.level == WordLevel.CET6 },
+                    allLearnedWords
+                )
             }.collect { (level, toLearn, toReview, favorites, allLearnedWords) ->
                 currentLevel = level
                 _uiState.update { state ->
@@ -155,7 +162,8 @@ class LearningViewModel @Inject constructor(
                         wordsForReview = toReview,
                         favoriteWords = favorites,
                         allLearnedWords = allLearnedWords,
-                        isDataLoaded = true
+                        isDataLoaded = true,
+                        currentLevel = level
                     )
                 }
             }

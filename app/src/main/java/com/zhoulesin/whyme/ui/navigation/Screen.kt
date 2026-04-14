@@ -1,16 +1,14 @@
 package com.zhoulesin.whyme.ui.navigation
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.School
 import androidx.compose.ui.graphics.vector.ImageVector
 
 /**
- * 底部导航路由
+ * 底部导航（方案 A：今日 / 六级库 / 我的）
  */
 sealed class BottomNavItem(
     val route: String,
@@ -18,18 +16,18 @@ sealed class BottomNavItem(
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector
 ) {
-    data object Home : BottomNavItem(
-        route = Screen.Home.route,
-        title = "首页",
-        selectedIcon = Icons.Filled.Home,
-        unselectedIcon = Icons.Outlined.Home
+    data object Today : BottomNavItem(
+        route = Screen.Today.route,
+        title = "今日",
+        selectedIcon = Icons.Outlined.CalendarToday,
+        unselectedIcon = Icons.Outlined.CalendarToday
     )
 
-    data object Learning : BottomNavItem(
-        route = Screen.Learning.route,
-        title = "学习",
-        selectedIcon = Icons.Filled.School,
-        unselectedIcon = Icons.Outlined.School
+    data object Cet6Library : BottomNavItem(
+        route = Screen.Cet6Library.route,
+        title = "六级库",
+        selectedIcon = Icons.AutoMirrored.Outlined.MenuBook,
+        unselectedIcon = Icons.AutoMirrored.Outlined.MenuBook
     )
 
     data object Profile : BottomNavItem(
@@ -40,7 +38,7 @@ sealed class BottomNavItem(
     )
 
     companion object {
-        val items = listOf(Home, Learning, Profile)
+        val items = listOf(Today, Cet6Library, Profile)
     }
 }
 
@@ -48,17 +46,17 @@ sealed class BottomNavItem(
  * 应用屏幕路由
  */
 sealed class Screen(val route: String) {
-    data object Home : Screen("home")
-    data object Learning : Screen("learning")
+    data object Today : Screen("today")
+    data object Cet6Library : Screen("cet6")
     data object LearningStudy : Screen("learning/study")
     data object LearningReview : Screen("learning/review")
     data object WordDetail : Screen("word/{wordId}") {
         fun createRoute(wordId: Long) = "word/$wordId"
     }
+
     data object Quiz : Screen("quiz")
     data object Profile : Screen("profile")
     data object Settings : Screen("settings")
-    data object Speaking : Screen("speaking")
     data object Favorites : Screen("favorites")
     data object Statistics : Screen("statistics")
     data object Login : Screen("login")
@@ -66,10 +64,10 @@ sealed class Screen(val route: String) {
 }
 
 /**
- * 学习模式
+ * 学习模式（从六级库进入复习 / 测验等二级流）
  */
 enum class LearningModeType {
-    LEARN,      // 学习新词
-    REVIEW,     // 复习
-    QUIZ        // 测试
+    LEARN,
+    REVIEW,
+    QUIZ
 }

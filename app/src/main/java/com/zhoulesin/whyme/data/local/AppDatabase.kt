@@ -33,7 +33,7 @@ import com.zhoulesin.whyme.data.local.entity.CheckInRecordEntity
         TestRecordEntity::class,
         CheckInRecordEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

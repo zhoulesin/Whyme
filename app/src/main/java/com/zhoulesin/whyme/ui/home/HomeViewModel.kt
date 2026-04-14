@@ -11,7 +11,6 @@ import com.zhoulesin.whyme.domain.usecase.GetDailyGoalUseCase
 import com.zhoulesin.whyme.domain.usecase.GetUserStatsUseCase
 import com.zhoulesin.whyme.domain.usecase.GetWordsForLearningUseCase
 import com.zhoulesin.whyme.domain.usecase.GetWordsForReviewUseCase
-import com.zhoulesin.whyme.domain.repository.WordBankRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -48,7 +47,6 @@ class HomeViewModel @Inject constructor(
     private val getDailyGoalUseCase: GetDailyGoalUseCase,
     private val getWordsForLearningUseCase: GetWordsForLearningUseCase,
     private val getWordsForReviewUseCase: GetWordsForReviewUseCase,
-    private val wordBankRepository: WordBankRepository,
     private val appInitializer: AppInitializer
 ) : ViewModel() {
 
@@ -62,18 +60,15 @@ class HomeViewModel @Inject constructor(
 
     private fun loadData() {
         viewModelScope.launch {
-            wordBankRepository.getCurrentLevel().flatMapLatest { currentLevel ->
-                combine(
-                    getWordsForReviewUseCase(),
-                    getWordsForLearningUseCase(level = currentLevel)
-                ) { reviewWords, learningWords ->
-                    Pair(currentLevel, Pair(reviewWords, learningWords))
-                }
-            }.collect { (currentLevel, pair) ->
-                val (reviewWords, learningWords) = pair
+            combine(
+                getWordsForReviewUseCase(level = WordLevel.CET6),
+                getWordsForLearningUseCase(level = WordLevel.CET6)
+            ) { reviewWords, learningWords ->
+                reviewWords to learningWords
+            }.collect { (reviewWords, learningWords) ->
                 _uiState.update {
                     it.copy(
-                        currentLevel = currentLevel,
+                        currentLevel = WordLevel.CET6,
                         wordsForReview = reviewWords,
                         newWordsCount = learningWords.size
                     )

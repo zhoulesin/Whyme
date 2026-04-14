@@ -2,14 +2,12 @@ package com.zhoulesin.whyme.ui.home
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -22,20 +20,19 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zhoulesin.whyme.ui.components.CircularProgressRing
 import com.zhoulesin.whyme.ui.components.StatItem
-import com.zhoulesin.whyme.ui.components.WordLevelSelector
 import com.zhoulesin.whyme.ui.theme.*
-import com.zhoulesin.whyme.ui.wordbank.WordBankViewModel
 
+/**
+ * 「今日」Tab：短会话入口与节奏反馈（design/linear：MarketingBlack、Level3Surface、8dp 圆角卡片）
+ */
 @Composable
-fun HomeScreen(
-    onNavigateToLearning: () -> Unit,
+fun TodayScreen(
+    onStartTodaySession: () -> Unit,
     onNavigateToReview: () -> Unit,
-    onNavigateToSearch: () -> Unit,
-    viewModel: HomeViewModel = hiltViewModel(),
-    wordBankViewModel: WordBankViewModel = hiltViewModel()
+    onNavigateToStudySettings: () -> Unit,
+    viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val wordBankState by wordBankViewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -44,78 +41,47 @@ fun HomeScreen(
             .padding(16.dp)
             .background(MarketingBlack)
     ) {
-        // 顶部问候语
-        Text(
-            text = "欢迎回来！",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight(510),
-            color = PrimaryText,
-            modifier = Modifier.padding(bottom = 4.dp)
-        )
-        Text(
-            text = "今天也要继续加油哦～",
-            style = MaterialTheme.typography.bodyLarge,
-            color = TertiaryText,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        // 搜索栏
-        Surface(
-            onClick = onNavigateToSearch,
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(8.dp),
-            color = Level3Surface,
-            border = BorderStroke(1.dp, BorderStandard)
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = null,
-                    tint = TertiaryText
-                )
-                Spacer(modifier = Modifier.width(8.dp))
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "搜索单词、释义...",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TertiaryText
+                    text = "今日",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight(510),
+                    color = PrimaryText,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+            }
+            IconButton(onClick = onNavigateToStudySettings) {
+                Icon(
+                    imageVector = Icons.Outlined.Settings,
+                    contentDescription = "学习设置",
+                    tint = SecondaryText
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // 词库级别选择器
-        WordLevelSelector(
-            currentLevel = wordBankState.currentLevel,
-            onLevelSelected = { level ->
-                wordBankViewModel.setCurrentLevel(level)
-            },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // 今日学习进度
         TodayProgressCard(
             learned = uiState.userStats.todayWordsLearned,
-            learnedGoal = uiState.dailyGoal.wordsPerDay,
+            reviewTotal = uiState.dailyGoal.reviewPerDay,
             reviewDone = uiState.userStats.todayWordsReviewed,
-            reviewGoal = uiState.dailyGoal.reviewPerDay,
-            testsDone = uiState.userStats.todayTests,
-            testGoal = 20, // 假设测试目标为20
-            testAccuracy = uiState.userStats.todayTestAccuracy,
-            learningMinutes = uiState.userStats.todayLearningMinutes,
-            onStartLearning = onNavigateToLearning
+            streak = uiState.userStats.currentStreak,
+            onStartSession = onStartTodaySession
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 待复习提醒
+        StatsRow(
+            totalWords = uiState.userStats.totalWordsLearned,
+            totalMinutes = uiState.userStats.totalLearningMinutes,
+            accuracy = uiState.userStats.todayAccuracy
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
         if (uiState.wordsForReview.isNotEmpty()) {
             ReviewReminderCard(
                 count = uiState.wordsForReview.size,
@@ -124,7 +90,6 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // 每日一句
         DailySentenceCard(sentence = uiState.dailySentence)
     }
 }
@@ -132,14 +97,10 @@ fun HomeScreen(
 @Composable
 private fun TodayProgressCard(
     learned: Int,
-    learnedGoal: Int,
+    reviewTotal: Int,
     reviewDone: Int,
-    reviewGoal: Int,
-    testsDone: Int,
-    testGoal: Int,
-    testAccuracy: Float,
-    learningMinutes: Int,
-    onStartLearning: () -> Unit
+    streak: Int,
+    onStartSession: () -> Unit
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -156,9 +117,8 @@ private fun TodayProgressCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 左侧进度环
-                val totalGoal = learnedGoal + reviewGoal + testGoal
-                val progress = if (totalGoal > 0) (learned + reviewDone + testsDone).toFloat() / totalGoal else 0f
+                val totalGoal = learned + reviewTotal
+                val progress = if (totalGoal > 0) (learned + reviewDone).toFloat() / totalGoal else 0f
 
                 CircularProgressRing(
                     progress = progress,
@@ -182,45 +142,20 @@ private fun TodayProgressCard(
                     }
                 )
 
-                // 右侧信息
                 Column(
                     modifier = Modifier.padding(start = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    StatColumn(label = "今日学习", value = "$learned / $learnedGoal")
-                    StatColumn(label = "今日复习", value = "$reviewDone / $reviewGoal")
-                    StatColumn(label = "今日测试", value = "$testsDone / $testGoal")
-                    StatColumn(label = "测试正确率", value = "${(testAccuracy * 100).toInt()}%")
+                    StatColumn(label = "新学单词", value = "$learned")
+                    StatColumn(label = "复习完成", value = "$reviewDone / $reviewTotal")
+                    StatColumn(label = "连续接触", value = "$streak 天")
                 }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 学习时长
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.AccessTime,
-                    contentDescription = "学习时长",
-                    tint = AccentViolet,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "今日学习时长: $learningMinutes 分钟",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = SecondaryText
-                )
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // 开始学习按钮
             Button(
-                onClick = onStartLearning,
+                onClick = onStartSession,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
@@ -231,7 +166,7 @@ private fun TodayProgressCard(
                 )
             ) {
                 Text(
-                    text = "开始学习",
+                    text = "开始今日",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight(510)
                 )
@@ -293,13 +228,13 @@ private fun ReviewReminderCard(
         ) {
             Column {
                 Text(
-                    text = "📚 待复习",
+                    text = "待复习",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight(590),
                     color = PrimaryText
                 )
                 Text(
-                    text = "你有 $count 个单词需要复习",
+                    text = "有 $count 个词待巩固",
                     style = MaterialTheme.typography.bodyMedium,
                     color = SecondaryText
                 )
@@ -313,7 +248,7 @@ private fun ReviewReminderCard(
                 )
             ) {
                 Text(
-                    text = "复习",
+                    text = "去复习",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight(510)
                 )

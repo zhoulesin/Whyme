@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -14,16 +13,16 @@ import androidx.navigation.navArgument
 import com.zhoulesin.whyme.data.datastore.UserManager
 import kotlinx.coroutines.launch
 import com.zhoulesin.whyme.ui.auth.LoginScreen
-import com.zhoulesin.whyme.ui.home.HomeScreen
-import com.zhoulesin.whyme.ui.learning.LearningScreen
+import com.zhoulesin.whyme.ui.home.TodayScreen
 import com.zhoulesin.whyme.ui.learning.NewWordLearningScreen
 import com.zhoulesin.whyme.ui.learning.ReviewScreen
 import com.zhoulesin.whyme.ui.learning.WordDetailScreen
 import com.zhoulesin.whyme.ui.learning.QuizScreen
 import com.zhoulesin.whyme.ui.profile.ProfileScreen
 import com.zhoulesin.whyme.ui.favorites.FavoritesScreen
-import com.zhoulesin.whyme.ui.search.SearchScreen
+import com.zhoulesin.whyme.ui.profile.SettingsScreen
 import com.zhoulesin.whyme.ui.statistics.StatisticsScreen
+import com.zhoulesin.whyme.ui.wordbank.WordBankLibraryScreen
 
 /**
  * 应用导航主机
@@ -51,33 +50,30 @@ fun AppNavHost(
                 }
             )
         }
-        composable(Screen.Home.route) {
-            HomeScreen(
-                onNavigateToLearning = {
+        composable(Screen.Today.route) {
+            TodayScreen(
+                onStartTodaySession = {
                     navController.navigate(Screen.LearningStudy.route)
                 },
                 onNavigateToReview = {
                     navController.navigate(Screen.LearningReview.route)
                 },
-                onNavigateToSearch = {
-                    navController.navigate(Screen.Search.route)
+                onNavigateToStudySettings = {
+                    navController.navigate(Screen.Settings.route)
                 }
             )
         }
 
-        // 学习中心入口页面（底部 tab）
-        composable(Screen.Learning.route) {
-            LearningScreen(
-                onNavigateToLearningSession = { mode ->
-                    val route = when (mode) {
-                        LearningModeType.LEARN -> Screen.LearningStudy.route
-                        LearningModeType.REVIEW -> Screen.LearningReview.route
-                        LearningModeType.QUIZ -> Screen.Quiz.route
-                    }
-                    navController.navigate(route)
-                },
-                onNavigateToWordDetail = { wordId ->
+        composable(Screen.Cet6Library.route) {
+            WordBankLibraryScreen(
+                onWordClick = { wordId ->
                     navController.navigate(Screen.WordDetail.createRoute(wordId))
+                },
+                onNavigateToReview = {
+                    navController.navigate(Screen.LearningReview.route)
+                },
+                onNavigateToQuiz = {
+                    navController.navigate(Screen.Quiz.route)
                 }
             )
         }
@@ -147,6 +143,12 @@ fun AppNavHost(
             )
         }
 
+        composable(Screen.Settings.route) {
+            SettingsScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
         composable(Screen.Favorites.route) {
             FavoritesScreen(
                 onNavigateBack = { navController.popBackStack() },
@@ -159,15 +161,6 @@ fun AppNavHost(
         composable(Screen.Statistics.route) {
             StatisticsScreen(
                 onNavigateBack = { navController.popBackStack() }
-            )
-        }
-
-        composable(Screen.Search.route) {
-            SearchScreen(
-                onNavigateBack = { navController.popBackStack() },
-                onNavigateToWordDetail = { wordId ->
-                    navController.navigate(Screen.WordDetail.createRoute(wordId))
-                }
             )
         }
     }
