@@ -4,14 +4,12 @@ import com.zhoulesin.whyme.data.local.dao.FavoriteDao
 import com.zhoulesin.whyme.data.local.dao.UserWordProgressDao
 import com.zhoulesin.whyme.data.local.dao.WordDao
 import com.zhoulesin.whyme.data.local.dao.LearningRecordDao
-import com.zhoulesin.whyme.data.local.dao.DailyLearningRecordDao
 import com.zhoulesin.whyme.data.local.dao.ReviewRecordDao
 import com.zhoulesin.whyme.data.local.dao.TestRecordDao
 import com.zhoulesin.whyme.data.local.dao.CheckInRecordDao
 import com.zhoulesin.whyme.data.local.entity.UserWordProgressEntity
 import com.zhoulesin.whyme.data.local.entity.FavoriteEntity
 import com.zhoulesin.whyme.data.local.entity.LearningRecordEntity
-import com.zhoulesin.whyme.data.local.entity.DailyLearningRecordEntity
 import com.zhoulesin.whyme.data.local.entity.ReviewRecordEntity
 import com.zhoulesin.whyme.data.local.entity.TestRecordEntity
 import com.zhoulesin.whyme.data.local.entity.CheckInRecordEntity
@@ -37,7 +35,6 @@ class WordRepositoryImpl @Inject constructor(
     private val userWordProgressDao: UserWordProgressDao,
     private val favoriteDao: FavoriteDao,
     private val learningRecordDao: LearningRecordDao,
-    private val dailyLearningRecordDao: DailyLearningRecordDao,
     private val reviewRecordDao: ReviewRecordDao,
     private val testRecordDao: TestRecordDao,
     private val checkInRecordDao: CheckInRecordDao
@@ -73,7 +70,14 @@ class WordRepositoryImpl @Inject constructor(
         combineWordData(wordDao.getAllWords())
 
     override fun getWordsForReview(limit: Int, level: WordLevel?): Flow<List<Word>> =
-        userWordProgressDao.getWordsForReview(LocalDate.now().toEpochDay(), limit, level?.name)
+        userWordProgressDao.getWordsForReview(
+            today = LocalDate.now().toEpochDay(),
+            todayStartMillis = LocalDate.now()
+                .atStartOfDay()
+                .toEpochSecond(java.time.ZoneOffset.systemDefault().rules.getOffset(java.time.Instant.now())) * 1000,
+            limit = limit,
+            level = level?.name
+        )
             .map { wordEntities ->
                 val favoriteIds = getFavoriteIds()
                 wordEntities.map { entity ->
@@ -243,7 +247,7 @@ class WordRepositoryImpl @Inject constructor(
     override suspend fun getTodayLearningMinutes(): Int {
         val todayStart = LocalDate.now().atStartOfDay().toEpochSecond(java.time.ZoneOffset.systemDefault().rules.getOffset(java.time.Instant.now())) * 1000
         val todayEnd = todayStart + 24 * 60 * 60 * 1000 - 1
-        return dailyLearningRecordDao.getTotalLearningMinutesInRange(todayStart, todayEnd)
+        return checkInRecordDao.getTotalLearningMinutesByDateRange(todayStart, todayEnd)
     }
 
     override fun searchWords(query: String): Flow<List<Word>> =
@@ -298,46 +302,6 @@ class WordRepositoryImpl @Inject constructor(
 
     override fun getLearningRecordsByLevel(level: String): Flow<List<LearningRecordEntity>> {
         return learningRecordDao.getRecordsByLevel(level)
-    }
-
-    override suspend fun recordDailyLearning(date: Long, wordsLearned: Int, wordsReviewed: Int, correctCount: Int, totalQuestions: Int, durationMinutes: Int, accuracy: Float) {
-        val existingRecord = dailyLearningRecordDao.getRecordByDate(date)
-        if (existingRecord != null) {
-            // 更新现有记录
-            dailyLearningRecordDao.updateRecord(
-                date = date,
-                wordsLearned = wordsLearned,
-                wordsReviewed = wordsReviewed,
-                correctCount = correctCount,
-                totalQuestions = totalQuestions,
-                durationMinutes = durationMinutes,
-                accuracy = accuracy
-            )
-        } else {
-            // 创建新记录
-            val newRecord = DailyLearningRecordEntity(
-                date = date,
-                wordsLearned = wordsLearned,
-                wordsReviewed = wordsReviewed,
-                correctCount = correctCount,
-                totalQuestions = totalQuestions,
-                durationMinutes = durationMinutes,
-                accuracy = accuracy
-            )
-            dailyLearningRecordDao.insertRecord(newRecord)
-        }
-    }
-
-    override suspend fun getDailyLearningRecord(date: Long): DailyLearningRecordEntity? {
-        return dailyLearningRecordDao.getRecordByDate(date)
-    }
-
-    override fun getRecentDailyLearningRecords(limit: Int): Flow<List<DailyLearningRecordEntity>> {
-        return dailyLearningRecordDao.getRecentRecords(limit)
-    }
-
-    override fun getDailyLearningRecordsByDateRange(startDate: Long, endDate: Long): Flow<List<DailyLearningRecordEntity>> {
-        return dailyLearningRecordDao.getRecordsByDateRange(startDate, endDate)
     }
 
     // 复习记录相关方法

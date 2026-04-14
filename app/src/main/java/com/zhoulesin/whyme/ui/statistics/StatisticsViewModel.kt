@@ -62,8 +62,8 @@ class StatisticsViewModel @Inject constructor(
                 getUserStatsUseCase(),
                 getDailyGoalUseCase()
             ) { userStats, goal -> Pair(userStats, goal) }.collect { (userStats, goal) ->
-                val todayTotal = userStats.todayWordsLearned + userStats.todayWordsReviewed
-                val goalTarget = goal.wordsPerDay + goal.reviewPerDay
+                val todayTotal = userStats.todayWordsLearned + userStats.todayWordsReviewed + userStats.todayTests
+                val goalTarget = goal.wordsPerDay + goal.reviewPerDay + goal.testsPerDay
                 val goalProgress = if (goalTarget > 0) (todayTotal.toFloat() / goalTarget).coerceAtMost(1f) else 0f
 
                 val totalWords = wordRepository.getWordCount()

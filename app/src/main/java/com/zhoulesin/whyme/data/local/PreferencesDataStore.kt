@@ -31,6 +31,7 @@ class PreferencesDataStore @Inject constructor(
     private object PreferencesKeys {
         val WORDS_PER_DAY = intPreferencesKey("words_per_day")
         val REVIEW_PER_DAY = intPreferencesKey("review_per_day")
+        val TESTS_PER_DAY = intPreferencesKey("tests_per_day")
         val MINUTES_PER_DAY = intPreferencesKey("minutes_per_day")
         val CURRENT_STREAK = intPreferencesKey("current_streak")
         val LONGEST_STREAK = intPreferencesKey("longest_streak")
@@ -68,6 +69,7 @@ class PreferencesDataStore @Inject constructor(
         DailyGoal(
             wordsPerDay = preferences[PreferencesKeys.WORDS_PER_DAY] ?: 10,
             reviewPerDay = preferences[PreferencesKeys.REVIEW_PER_DAY] ?: 20,
+            testsPerDay = preferences[PreferencesKeys.TESTS_PER_DAY] ?: 10,
             minutesPerDay = preferences[PreferencesKeys.MINUTES_PER_DAY] ?: 15
         )
     }
@@ -76,6 +78,7 @@ class PreferencesDataStore @Inject constructor(
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.WORDS_PER_DAY] = goal.wordsPerDay
             preferences[PreferencesKeys.REVIEW_PER_DAY] = goal.reviewPerDay
+            preferences[PreferencesKeys.TESTS_PER_DAY] = goal.testsPerDay
             preferences[PreferencesKeys.MINUTES_PER_DAY] = goal.minutesPerDay
         }
     }

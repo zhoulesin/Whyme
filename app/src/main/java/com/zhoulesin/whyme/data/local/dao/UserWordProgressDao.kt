@@ -14,14 +14,21 @@ interface UserWordProgressDao {
     @Query("""
         SELECT w.* FROM words w
         INNER JOIN user_word_progress p ON w.id = p.wordId
-        WHERE p.nextReviewDate IS NOT NULL
-        AND p.nextReviewDate <= :today
+        WHERE (
+            (p.nextReviewDate IS NOT NULL AND p.nextReviewDate <= :today)
+            OR (p.learnedAt IS NOT NULL AND p.learnedAt >= :todayStartMillis)
+        )
         AND p.masteryLevel < 5
         AND (:level IS NULL OR w.level = :level)
         ORDER BY p.nextReviewDate ASC
         LIMIT :limit
     """)
-    fun getWordsForReview(today: Long, limit: Int, level: String? = null): Flow<List<WordEntity>>
+    fun getWordsForReview(
+        today: Long,
+        todayStartMillis: Long,
+        limit: Int,
+        level: String? = null
+    ): Flow<List<WordEntity>>
 
     @Query("""
         SELECT w.* FROM words w

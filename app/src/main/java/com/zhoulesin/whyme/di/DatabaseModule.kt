@@ -6,7 +6,6 @@ import com.zhoulesin.whyme.data.local.dao.UserWordBankSettingsDao
 import com.zhoulesin.whyme.data.local.dao.UserWordProgressDao
 import com.zhoulesin.whyme.data.local.dao.WordDao
 import com.zhoulesin.whyme.data.local.dao.LearningRecordDao
-import com.zhoulesin.whyme.data.local.dao.DailyLearningRecordDao
 import com.zhoulesin.whyme.data.local.dao.ReviewRecordDao
 import com.zhoulesin.whyme.data.local.dao.TestRecordDao
 import com.zhoulesin.whyme.data.local.dao.CheckInRecordDao
@@ -48,12 +47,6 @@ object DatabaseModule {
     @Singleton
     fun provideLearningRecordDao(userDatabaseManager: UserDatabaseManager): LearningRecordDao {
         return userDatabaseManager.getLearningRecordDao()
-    }
-
-    @Provides
-    @Singleton
-    fun provideDailyLearningRecordDao(userDatabaseManager: UserDatabaseManager): DailyLearningRecordDao {
-        return userDatabaseManager.getDailyLearningRecordDao()
     }
 
     @Provides

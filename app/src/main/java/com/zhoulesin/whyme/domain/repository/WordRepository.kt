@@ -191,28 +191,6 @@ interface WordRepository {
      */
     fun getLearningRecordsByLevel(level: String): Flow<List<com.zhoulesin.whyme.data.local.entity.LearningRecordEntity>>
 
-    // 新增方法：每日学习记录相关
-
-    /**
-     * 记录每日学习数据
-     */
-    suspend fun recordDailyLearning(date: Long, wordsLearned: Int, wordsReviewed: Int, correctCount: Int, totalQuestions: Int, durationMinutes: Int, accuracy: Float)
-
-    /**
-     * 获取指定日期的学习记录
-     */
-    suspend fun getDailyLearningRecord(date: Long): com.zhoulesin.whyme.data.local.entity.DailyLearningRecordEntity?
-
-    /**
-     * 获取最近的学习记录
-     */
-    fun getRecentDailyLearningRecords(limit: Int): Flow<List<com.zhoulesin.whyme.data.local.entity.DailyLearningRecordEntity>>
-
-    /**
-     * 获取指定日期范围内的学习记录
-     */
-    fun getDailyLearningRecordsByDateRange(startDate: Long, endDate: Long): Flow<List<com.zhoulesin.whyme.data.local.entity.DailyLearningRecordEntity>>
-
     // 新增方法：复习记录相关
 
     /**

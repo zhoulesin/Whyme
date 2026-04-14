@@ -5,12 +5,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhoulesin.whyme.domain.model.*
 import com.zhoulesin.whyme.domain.usecase.*
-import com.zhoulesin.whyme.domain.repository.WordBankRepository
 import com.zhoulesin.whyme.utils.TextToSpeechHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -22,14 +21,13 @@ import javax.inject.Inject
 class ReviewViewModel @Inject constructor(
     private val getWordsForReviewUseCase: GetWordsForReviewUseCase,
     private val updateWordReviewUseCase: UpdateWordReviewUseCase,
-    private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
-    private val wordBankRepository: WordBankRepository
+    private val toggleFavoriteUseCase: ToggleFavoriteUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ReviewUiState())
     val uiState: StateFlow<ReviewUiState> = _uiState
 
-    private var currentLevel: WordLevel? = null
+    private var currentLevel: WordLevel = WordLevel.CET6
     private var ttsHelper: TextToSpeechHelper? = null
 
     /**
@@ -37,12 +35,9 @@ class ReviewViewModel @Inject constructor(
      */
     fun initSession() {
         viewModelScope.launch {
-            // 获取当前词库级别
-            wordBankRepository.getCurrentLevel().collectLatest {level ->
-                currentLevel = level
-                _uiState.update { it.copy(currentLevel = level) }
-                loadReviewWords()
-            }
+            // 当前产品词域固定为 CET6，避免默认级别导致复习列表为空。
+            _uiState.update { it.copy(currentLevel = currentLevel) }
+            loadReviewWords()
         }
     }
 
@@ -54,7 +49,7 @@ class ReviewViewModel @Inject constructor(
             _uiState.update { it.copy(isDataLoaded = false) }
 
             try {
-                val wordsForReview = getWordsForReviewUseCase(20, currentLevel).collectLatest {words ->
+                getWordsForReviewUseCase(20, currentLevel).collect { words ->
                     _uiState.update {state ->
                         state.copy(
                             wordsForReview = words,

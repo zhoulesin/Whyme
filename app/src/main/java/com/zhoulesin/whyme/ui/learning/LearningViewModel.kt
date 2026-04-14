@@ -238,8 +238,6 @@ class LearningViewModel @Inject constructor(
                     ReviewResult.HARD -> 2
                     ReviewResult.AGAIN -> 1
                 }
-                val isCorrect = result == ReviewResult.GOOD || result == ReviewResult.EASY
-                val durationSeconds = (System.currentTimeMillis() - currentState.startTime) / 1000
                 
                 // 更新单词复习信息
                 updateWordReviewUseCase(word.id, result)
@@ -273,21 +271,8 @@ class LearningViewModel @Inject constructor(
                                 durationSeconds = totalDurationSeconds
                             )
                             
-                            // 记录每日学习记录
                             val todayStart = java.time.LocalDate.now().atStartOfDay().toEpochSecond(java.time.ZoneOffset.systemDefault().rules.getOffset(java.time.Instant.now())) * 1000
-                            val accuracy = if (finalStats.wordsReviewed > 0) {
-                                finalStats.correctCount.toFloat() / finalStats.wordsReviewed
-                            } else 0f
-                            wordRepository.recordDailyLearning(
-                                date = todayStart,
-                                wordsLearned = finalStats.wordsLearned,
-                                wordsReviewed = if (isNewWord) 0 else finalStats.wordsReviewed,
-                                correctCount = finalStats.correctCount,
-                                totalQuestions = finalStats.wordsReviewed,
-                                durationMinutes = (totalDurationSeconds / 60).toInt(),
-                                accuracy = accuracy
-                            )
-                            
+
                             // 记录打卡
                             wordRepository.recordCheckIn(
                                 date = todayStart,

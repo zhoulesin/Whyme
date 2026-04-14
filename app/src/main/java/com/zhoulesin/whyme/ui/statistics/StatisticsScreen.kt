@@ -149,7 +149,7 @@ private fun TodayOverviewCard(
                         color = PrimaryText
                     )
                     Text(
-                        text = "目标: ${dailyGoal.wordsPerDay}词 + ${dailyGoal.reviewPerDay}复习",
+                        text = "目标: ${dailyGoal.wordsPerDay}学习 + ${dailyGoal.reviewPerDay}复习 + ${dailyGoal.testsPerDay}测试",
                         style = MaterialTheme.typography.bodySmall,
                         color = TertiaryText
                     )

@@ -26,14 +26,11 @@ class DatabaseInitializer(
         val level: WordLevel
     )
 
-    // 词库文件列表
+    // 词库文件列表（当前仅初始化 CET6 及以下）
     private val wordFiles = listOf(
         WordSource("words/GaoZhong.json", "高中词汇", WordLevel.GAOZHONG),
         WordSource("words/cet4.json", "CET4", WordLevel.CET4),
-        WordSource("words/CET6.json", "CET6", WordLevel.CET6),
-        WordSource("words/KaoYan.json", "考研词汇", WordLevel.KAOYAN),
-        WordSource("words/TOEFL.json", "托福词汇", WordLevel.TOEFL),
-        WordSource("words/GRE.json", "GRE词汇", WordLevel.GRE)
+        WordSource("words/CET6.json", "CET6", WordLevel.CET6)
     )
 
     /**

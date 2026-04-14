@@ -42,5 +42,6 @@ data class UserStats(
 data class DailyGoal(
     val wordsPerDay: Int = 10,
     val reviewPerDay: Int = 20,
+    val testsPerDay: Int = 10,
     val minutesPerDay: Int = 15
 )
